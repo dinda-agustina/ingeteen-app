@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
+import 'utils/app_routes.dart';
+import 'utils/app_theme.dart';
 
-void main() {
-  runApp(const TaskManagerApp());
-}
+void main() => runApp(const IngeTeenApp());
 
-class TaskManagerApp extends StatelessWidget {
-  const TaskManagerApp({super.key});
+class IngeTeenApp extends StatelessWidget {
+  const IngeTeenApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'IngeTeen',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-        ),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        // Segera: TaskProvider dan LabelProvider
+      ],
+      child: MaterialApp(
+        title: 'IngeTeen',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        initialRoute: AppRoutes.splash,
+        routes: AppRoutes.routes,
       ),
-      home: const HomeScreen(),
     );
   }
 }

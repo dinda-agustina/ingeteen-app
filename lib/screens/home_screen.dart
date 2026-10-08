@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../data/dummy_tasks.dart';
-import '../widgets/task_card.dart';
+import 'package:provider/provider.dart';
+
+import '../../data/dummy_tasks.dart';
+import '../../providers/auth_provider.dart';
+import '../../widgets/task_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,6 +17,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+
     final pendingTasks =
         dummyTasks.where((task) => !task.completed).toList();
 
@@ -25,34 +30,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F5E9),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 12,
           ),
-
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // HEADER
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hi, User!',
-                          style: TextStyle(
+                          'Hi, ${user?.username ?? 'User'}!',
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF26364D),
                           ),
                         ),
-                        SizedBox(height: 3),
-                        Text(
+                        const SizedBox(height: 3),
+                        const Text(
                           'Semangat untuk hari ini!',
                           style: TextStyle(
                             fontSize: 10,
@@ -62,7 +64,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-
                   Container(
                     width: 40,
                     height: 40,
@@ -86,7 +87,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 14),
 
-              // SEARCH
               Container(
                 height: 42,
                 padding: const EdgeInsets.symmetric(
@@ -145,7 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 12),
 
-              // TAB
               Container(
                 height: 38,
                 padding: const EdgeInsets.all(3),
@@ -156,16 +155,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: _buildTab(
-                        'PENDING',
-                        0,
-                      ),
+                      child: _buildTab('PENDING', 0),
                     ),
                     Expanded(
-                      child: _buildTab(
-                        'COMPLETED',
-                        1,
-                      ),
+                      child: _buildTab('COMPLETED', 1),
                     ),
                   ],
                 ),
@@ -173,7 +166,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 12),
 
-              // TASK LIST
               Expanded(
                 child: ListView.builder(
                   itemCount: displayedTasks.length,
