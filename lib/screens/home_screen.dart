@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/dummy_tasks.dart';
-import '../../providers/auth_provider.dart';
-import '../../widgets/task_card.dart';
+import '../data/dummy_tasks.dart';
+import '../providers/auth_provider.dart';
+import '../utils/app_routes.dart';
+import '../widgets/task_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,28 +20,40 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
 
-    final pendingTasks =
-        dummyTasks.where((task) => !task.completed).toList();
+    final pendingTasks = dummyTasks.where((task) => !task.completed).toList();
 
-    final completedTasks =
-        dummyTasks.where((task) => task.completed).toList();
+    final completedTasks = dummyTasks.where((task) => task.completed).toList();
 
-    final displayedTasks =
-        selectedTab == 0 ? pendingTasks : completedTasks;
+    final displayedTasks = selectedTab == 0 ? pendingTasks : completedTasks;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9F5E9),
+
+      // TAMBAHAN: Sidebar kategori
+      drawer: _buildDrawer(context, user?.username ?? 'User'),
+
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
+                  // TAMBAHAN: Tombol untuk membuka sidebar
+                  Builder(
+                    builder: (context) => IconButton(
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                      icon: const Icon(Icons.menu, color: Color(0xFF26364D)),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,9 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               Container(
                 height: 42,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -105,18 +116,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(
-                      Icons.search,
-                      size: 18,
-                      color: Color(0xFF888888),
-                    ),
+                    Icon(Icons.search, size: 18, color: Color(0xFF888888)),
                     SizedBox(width: 8),
                     Text(
                       'Cari tugas...',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF999999),
-                      ),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF999999)),
                     ),
                   ],
                 ),
@@ -137,10 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const Text(
                 'Atur prioritas dan tuntaskan satu per satu.',
-                style: TextStyle(
-                  fontSize: 9,
-                  color: Color(0xFF888888),
-                ),
+                style: TextStyle(fontSize: 9, color: Color(0xFF888888)),
               ),
 
               const SizedBox(height: 12),
@@ -154,12 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Expanded(
-                      child: _buildTab('PENDING', 0),
-                    ),
-                    Expanded(
-                      child: _buildTab('COMPLETED', 1),
-                    ),
+                    Expanded(child: _buildTab('PENDING', 0)),
+                    Expanded(child: _buildTab('COMPLETED', 1)),
                   ],
                 ),
               ),
@@ -195,9 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.add),
         label: const Text(
           'Tambah',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -214,15 +209,9 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: selected
-              ? Colors.white
-              : Colors.transparent,
+          color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
-          border: selected
-              ? Border.all(
-                  color: const Color(0xFFFFB31A),
-                )
-              : null,
+          border: selected ? Border.all(color: const Color(0xFFFFB31A)) : null,
         ),
         child: Center(
           child: Text(
@@ -235,6 +224,173 @@ class _HomeScreenState extends State<HomeScreen> {
                   : const Color(0xFF8A8A8A),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // TAMBAHAN: Drawer sesuai desain sidebar Figma
+  Widget _buildDrawer(BuildContext context, String username) {
+    const navy = Color(0xFF26364D);
+    const cream = Color(0xFFF9F5E9);
+    const orange = Color(0xFFFFB31A);
+    const yellow = Color(0xFFFFEAA7);
+
+    Widget menuItem(IconData icon, String title, {bool selected = false}) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          color: selected ? yellow : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          leading: Icon(icon, color: navy, size: 20),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: navy,
+              fontSize: 14,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          onTap: () {
+            // Menutup Drawer setelah menu ditekan.
+            // Filter kategori belum diimplementasikan.
+            Navigator.pop(context);
+          },
+        ),
+      );
+    }
+
+    return Drawer(
+      backgroundColor: cream,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Logo IngeTeen
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: yellow,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.edit_note, color: navy, size: 28),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Inge',
+                    style: TextStyle(
+                      color: navy,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Text(
+                    'Teen',
+                    style: TextStyle(
+                      color: orange,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Menu kategori
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  menuItem(Icons.description_outlined, 'All Task'),
+                  menuItem(Icons.checklist, 'Urgent'),
+                  menuItem(Icons.label_outline, 'Label', selected: true),
+                  menuItem(Icons.inventory_2_outlined, 'Arsip'),
+                  menuItem(Icons.delete_outline, 'Sampah'),
+                ],
+              ),
+            ),
+
+            // Profil pengguna dan tombol logout
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF7FB3FF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'US',
+                          style: TextStyle(
+                            color: navy,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            username,
+                            style: const TextStyle(
+                              color: navy,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            'Pengaturan Profil',
+                            style: TextStyle(color: orange, fontSize: 9),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Keluar',
+                      onPressed: () {
+                        context.read<AuthProvider>().logout();
+
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AppRoutes.login,
+                          (_) => false,
+                        );
+                      },
+                      icon: const Icon(Icons.logout, color: navy, size: 20),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
