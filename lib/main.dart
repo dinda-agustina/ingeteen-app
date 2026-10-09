@@ -25,9 +25,7 @@ class IngeTeenApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.cream,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.orange,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.orange),
         fontFamily: 'Arial',
       ),
       home: const HomePage(),
@@ -47,9 +45,7 @@ class HomePage extends StatelessWidget {
           final tabController = DefaultTabController.of(context);
 
           return Scaffold(
-            drawer: AppDrawer(
-              tabController: tabController,
-            ),
+            drawer: AppDrawer(tabController: tabController),
             body: SafeArea(
               child: Column(
                 children: [
@@ -58,12 +54,7 @@ class HomePage extends StatelessWidget {
                   _buildTaskTitle(),
                   _buildTabBar(),
                   const Expanded(
-                    child: TabBarView(
-                      children: [
-                        PendingTab(),
-                        CompletedTab(),
-                      ],
-                    ),
+                    child: TabBarView(children: [PendingTab(), CompletedTab()]),
                   ),
                 ],
               ),
@@ -74,9 +65,7 @@ class HomePage extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddTaskPage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const AddTaskPage()),
                 );
               },
               child: const Icon(Icons.add),
@@ -100,11 +89,7 @@ class HomePage extends StatelessWidget {
                 onPressed: () {
                   Scaffold.of(context).openDrawer();
                 },
-                icon: const Icon(
-                  Icons.menu,
-                  size: 28,
-                  color: AppColors.navy,
-                ),
+                icon: const Icon(Icons.menu, size: 28, color: AppColors.navy),
               );
             },
           ),
@@ -124,10 +109,7 @@ class HomePage extends StatelessWidget {
                 SizedBox(height: 3),
                 Text(
                   'Yuk selesaikan tugasmu hari ini.',
-                  style: TextStyle(
-                    color: AppColors.grey,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: AppColors.grey, fontSize: 13),
                 ),
               ],
             ),
@@ -139,11 +121,7 @@ class HomePage extends StatelessWidget {
               color: AppColors.blue,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.person,
-              color: AppColors.navy,
-              size: 26,
-            ),
+            child: const Icon(Icons.person, color: AppColors.navy, size: 26),
           ),
         ],
       ),
@@ -152,25 +130,15 @@ class HomePage extends StatelessWidget {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Cari tugas...',
-          hintStyle: const TextStyle(
-            color: AppColors.grey,
-          ),
-          prefixIcon: const Icon(
-            Icons.search,
-            color: AppColors.grey,
-          ),
+          hintStyle: const TextStyle(color: AppColors.grey),
+          prefixIcon: const Icon(Icons.search, color: AppColors.grey),
           filled: true,
           fillColor: AppColors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 14,
-          ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide.none,
@@ -207,12 +175,8 @@ class HomePage extends StatelessWidget {
         indicatorWeight: 3,
         dividerColor: Colors.transparent,
         tabs: [
-          Tab(
-            text: 'PENDING',
-          ),
-          Tab(
-            text: 'COMPLETED',
-          ),
+          Tab(text: 'PENDING'),
+          Tab(text: 'COMPLETED'),
         ],
       ),
     );
@@ -226,10 +190,7 @@ class HomePage extends StatelessWidget {
 class AppDrawer extends StatelessWidget {
   final TabController tabController;
 
-  const AppDrawer({
-    super.key,
-    required this.tabController,
-  });
+  const AppDrawer({super.key, required this.tabController});
 
   @override
   Widget build(BuildContext context) {
@@ -238,146 +199,225 @@ class AppDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(
-                24,
-                30,
-                24,
-                26,
-              ),
-              decoration: const BoxDecoration(
-                color: AppColors.navy,
-                borderRadius: BorderRadius.only(
-                  bottomRight: Radius.circular(28),
-                ),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // =========================
+            // LOGO INGETEEN
+            // =========================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+              child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: AppColors.blue,
-                    child: Icon(
-                      Icons.person,
-                      color: AppColors.navy,
-                      size: 30,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEAA7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: Text('📝', style: TextStyle(fontSize: 21)),
                     ),
                   ),
-                  SizedBox(height: 16),
-                  Text(
-                    'IngeTeen',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Task Management',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
+                  const SizedBox(width: 12),
+                  RichText(
+                    text: const TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Inge',
+                          style: TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(
+                          text: 'Teen',
+                          style: TextStyle(
+                            color: AppColors.orange,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 12),
-
-            ListTile(
-              leading: const Icon(
-                Icons.home_outlined,
-                color: AppColors.navy,
-              ),
-              title: const Text(
-                'Semua Tugas',
-                style: TextStyle(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.pending_actions,
-                color: AppColors.navy,
-              ),
-              title: const Text(
-                'Pending',
-                style: TextStyle(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                tabController.animateTo(0);
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.task_alt,
-                color: AppColors.navy,
-              ),
-              title: const Text(
-                'Completed',
-                style: TextStyle(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                tabController.animateTo(1);
-              },
-            ),
-
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Divider(),
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.add_circle_outline,
-                color: AppColors.orange,
-              ),
-              title: const Text(
-                'Tambah Tugas',
-                style: TextStyle(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AddTaskPage(),
+            // =========================
+            // MENU SIDEBAR
+            // =========================
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  // ALL TASK
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    leading: const Icon(
+                      Icons.description_outlined,
+                      color: AppColors.navy,
+                      size: 20,
+                    ),
+                    title: const Text(
+                      'All Task',
+                      style: TextStyle(color: AppColors.navy, fontSize: 14),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
                   ),
-                );
-              },
+
+                  // URGENT
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    leading: const Icon(
+                      Icons.checklist,
+                      color: AppColors.navy,
+                      size: 20,
+                    ),
+                    title: const Text(
+                      'Urgent',
+                      style: TextStyle(color: AppColors.navy, fontSize: 14),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // LABEL
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEAA7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      leading: const Icon(
+                        Icons.label_outline,
+                        color: AppColors.navy,
+                        size: 20,
+                      ),
+                      title: const Text(
+                        'Label',
+                        style: TextStyle(
+                          color: AppColors.navy,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // ARSIP
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    leading: const Icon(
+                      Icons.inventory_2_outlined,
+                      color: AppColors.navy,
+                      size: 20,
+                    ),
+                    title: const Text(
+                      'Arsip',
+                      style: TextStyle(color: AppColors.navy, fontSize: 14),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  // SAMPAH
+                  ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    leading: const Icon(
+                      Icons.delete_outline,
+                      color: AppColors.navy,
+                      size: 20,
+                    ),
+                    title: const Text(
+                      'Sampah',
+                      style: TextStyle(color: AppColors.navy, fontSize: 14),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
 
-            const Spacer(),
+            // =========================
+            // USER PROFILE
+            // =========================
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    // Avatar
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: const BoxDecoration(
+                        color: AppColors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'US',
+                          style: TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
 
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Text(
-                'IngeTeen App',
-                style: TextStyle(
-                  color: AppColors.grey,
-                  fontSize: 12,
+                    const SizedBox(width: 12),
+
+                    // Nama dan pengaturan
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'User',
+                          style: TextStyle(
+                            color: AppColors.navy,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                          'Pengaturan Profil',
+                          style: TextStyle(
+                            color: AppColors.orange,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -398,17 +438,11 @@ class PendingTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        16,
-        20,
-        100,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: const [
         TaskCard(
           title: 'Implementasi Sorting',
-          description:
-              'Menyelesaikan implementasi algoritma sorting.',
+          description: 'Menyelesaikan implementasi algoritma sorting.',
           course: 'Struktur Data',
           priority: 'Urgent',
           deadline: 'Besok • 23:59',
@@ -416,8 +450,7 @@ class PendingTab extends StatelessWidget {
         ),
         TaskCard(
           title: 'Laporan Praktikum',
-          description:
-              'Membuat laporan praktikum sistem operasi.',
+          description: 'Membuat laporan praktikum sistem operasi.',
           course: 'Sistem Operasi',
           priority: 'High',
           deadline: '10 Okt • 23:59',
@@ -425,8 +458,7 @@ class PendingTab extends StatelessWidget {
         ),
         TaskCard(
           title: 'Desain Prototype',
-          description:
-              'Menyelesaikan prototype aplikasi pada Figma.',
+          description: 'Menyelesaikan prototype aplikasi pada Figma.',
           course: 'Perancangan Web',
           priority: 'Medium',
           deadline: '12 Okt • 20:00',
@@ -447,17 +479,11 @@ class CompletedTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        16,
-        20,
-        100,
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: const [
         TaskCard(
           title: 'Membuat Struktur HTML',
-          description:
-              'Menyelesaikan halaman profil menggunakan HTML.',
+          description: 'Menyelesaikan halaman profil menggunakan HTML.',
           course: 'Pemrograman Web',
           priority: 'Done',
           deadline: 'Selesai',
@@ -466,8 +492,7 @@ class CompletedTab extends StatelessWidget {
         ),
         TaskCard(
           title: 'Instalasi Flutter',
-          description:
-              'Melakukan instalasi dan konfigurasi Flutter.',
+          description: 'Melakukan instalasi dan konfigurasi Flutter.',
           course: 'Pemrograman Perangkat Bergerak',
           priority: 'Done',
           deadline: 'Selesai',
@@ -530,22 +555,14 @@ class TaskCard extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: completed
-                        ? Colors.green
-                        : AppColors.navy,
+                    color: completed ? Colors.green : AppColors.navy,
                     width: 2,
                   ),
                   borderRadius: BorderRadius.circular(7),
-                  color: completed
-                      ? Colors.green
-                      : Colors.transparent,
+                  color: completed ? Colors.green : Colors.transparent,
                 ),
                 child: completed
-                    ? const Icon(
-                        Icons.check,
-                        size: 17,
-                        color: Colors.white,
-                      )
+                    ? const Icon(Icons.check, size: 17, color: Colors.white)
                     : null,
               ),
               const SizedBox(width: 12),
@@ -556,9 +573,7 @@ class TaskCard extends StatelessWidget {
                     color: AppColors.navy,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    decoration: completed
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration: completed ? TextDecoration.lineThrough : null,
                   ),
                 ),
               ),
@@ -587,14 +602,8 @@ class TaskCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildTag(
-                  text: priority,
-                  color: priorityColor,
-                ),
-                _buildTag(
-                  text: course,
-                  color: AppColors.navy,
-                ),
+                _buildTag(text: priority, color: priorityColor),
+                _buildTag(text: course, color: AppColors.navy),
               ],
             ),
           ),
@@ -613,10 +622,7 @@ class TaskCard extends StatelessWidget {
                 const SizedBox(width: 7),
                 Text(
                   deadline,
-                  style: const TextStyle(
-                    color: AppColors.grey,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: AppColors.grey, fontSize: 12),
                 ),
               ],
             ),
@@ -626,15 +632,9 @@ class TaskCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTag({
-    required String text,
-    required Color color,
-  }) {
+  Widget _buildTag({required String text, required Color color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 10,
-        vertical: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
@@ -669,18 +669,11 @@ class AddTaskPage extends StatelessWidget {
         elevation: 0,
         title: const Text(
           'Tambah Tugas',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          20,
-          10,
-          20,
-          30,
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -697,58 +690,34 @@ class AddTaskPage extends StatelessWidget {
 
             const Text(
               'Lengkapi informasi tugas di bawah ini.',
-              style: TextStyle(
-                color: AppColors.grey,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.grey, fontSize: 13),
             ),
 
             const SizedBox(height: 25),
 
             _buildLabel('Judul Tugas'),
-            _buildTextField(
-              hint: 'Masukkan judul tugas',
-            ),
+            _buildTextField(hint: 'Masukkan judul tugas'),
 
             const SizedBox(height: 18),
 
             _buildLabel('Deskripsi'),
-            _buildTextField(
-              hint: 'Masukkan deskripsi tugas',
-              maxLines: 4,
-            ),
+            _buildTextField(hint: 'Masukkan deskripsi tugas', maxLines: 4),
 
             const SizedBox(height: 18),
 
             _buildLabel('Mata Kuliah'),
-            _buildTextField(
-              hint: 'Masukkan mata kuliah',
-            ),
+            _buildTextField(hint: 'Masukkan mata kuliah'),
 
             const SizedBox(height: 18),
 
             _buildLabel('Prioritas'),
             DropdownButtonFormField<String>(
-              decoration: _inputDecoration(
-                hint: 'Pilih prioritas',
-              ),
+              decoration: _inputDecoration(hint: 'Pilih prioritas'),
               items: const [
-                DropdownMenuItem(
-                  value: 'Urgent',
-                  child: Text('Urgent'),
-                ),
-                DropdownMenuItem(
-                  value: 'High',
-                  child: Text('High'),
-                ),
-                DropdownMenuItem(
-                  value: 'Medium',
-                  child: Text('Medium'),
-                ),
-                DropdownMenuItem(
-                  value: 'Low',
-                  child: Text('Low'),
-                ),
+                DropdownMenuItem(value: 'Urgent', child: Text('Urgent')),
+                DropdownMenuItem(value: 'High', child: Text('High')),
+                DropdownMenuItem(value: 'Medium', child: Text('Medium')),
+                DropdownMenuItem(value: 'Low', child: Text('Low')),
               ],
               onChanged: (value) {},
             ),
@@ -778,10 +747,7 @@ class AddTaskPage extends StatelessWidget {
                 onPressed: () {},
                 child: const Text(
                   'Tambah Tugas',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             ),
@@ -812,10 +778,7 @@ class AddTaskPage extends StatelessWidget {
   }) {
     return TextField(
       maxLines: maxLines,
-      decoration: _inputDecoration(
-        hint: hint,
-        suffixIcon: suffixIcon,
-      ),
+      decoration: _inputDecoration(hint: hint, suffixIcon: suffixIcon),
     );
   }
 
@@ -825,22 +788,13 @@ class AddTaskPage extends StatelessWidget {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: AppColors.grey,
-        fontSize: 13,
-      ),
+      hintStyle: const TextStyle(color: AppColors.grey, fontSize: 13),
       filled: true,
       fillColor: AppColors.white,
       suffixIcon: suffixIcon == null
           ? null
-          : const Icon(
-              Icons.calendar_today_outlined,
-              color: AppColors.grey,
-            ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 14,
-      ),
+          : const Icon(Icons.calendar_today_outlined, color: AppColors.grey),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
