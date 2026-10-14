@@ -15,7 +15,7 @@ class AppLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final logo = Image.asset(
-      'assets/images/logo.png',
+      'assets/images/Logo IngeTeen.png',
       width: fontSize * 1.8,
       height: fontSize * 1.8,
       fit: BoxFit.contain,
