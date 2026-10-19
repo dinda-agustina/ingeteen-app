@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/dummy_tasks.dart';
-import '../../providers/auth_provider.dart';
-import '../../widgets/task_card.dart';
+import '../data/dummy_tasks.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/task_card.dart';
+import 'add_task_screen.dart';
+import 'add_note_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,6 +16,115 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int selectedTab = 0;
+
+  Future<void> _openAddTask() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddTaskScreen(),
+      ),
+    );
+
+    if (result == true && mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _openAddNote() async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddNoteScreen(),
+      ),
+    );
+  }
+
+  void _showAddMenu() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildAddOption(
+                icon: Icons.note_add_outlined,
+                title: 'Catatan Baru',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _openAddNote();
+                },
+              ),
+              const SizedBox(height: 10),
+              _buildAddOption(
+                icon: Icons.checklist_rounded,
+                title: 'Tugas Baru',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _openAddTask();
+                },
+              ),
+              const SizedBox(height: 10),
+              FloatingActionButton.extended(
+                heroTag: 'closeAddMenu',
+                onPressed: () => Navigator.pop(sheetContext),
+                backgroundColor: const Color(0xFFFFAD16),
+                foregroundColor: const Color(0xFF26364D),
+                icon: const Icon(Icons.close, size: 18),
+                label: const Text('Tutup'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAddOption({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 13,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: const Color(0xFF26364D),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF26364D),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header
               Row(
                 children: [
                   Expanded(
@@ -87,6 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 14),
 
+              // Search bar (tampilan)
               Container(
                 height: 42,
                 padding: const EdgeInsets.symmetric(
@@ -124,6 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 18),
 
+              // Judul bagian tugas
               const Text(
                 'Tugas',
                 style: TextStyle(
@@ -145,6 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 12),
 
+              // Tab Pending dan Completed
               Container(
                 height: 38,
                 padding: const EdgeInsets.all(3),
@@ -166,31 +281,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 12),
 
+              // Daftar tugas
               Expanded(
-                child: ListView.builder(
-                  itemCount: displayedTasks.length,
-                  itemBuilder: (context, index) {
-                    final task = displayedTasks[index];
+                child: displayedTasks.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Belum ada tugas.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF888888),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: displayedTasks.length,
+                        itemBuilder: (context, index) {
+                          final task = displayedTasks[index];
 
-                    return TaskCard(
-                      task: task,
-                      onChanged: () {
-                        setState(() {
-                          task.completed = !task.completed;
-                        });
-                      },
-                    );
-                  },
-                ),
+                          return TaskCard(
+                            task: task,
+                            onChanged: () {
+                              setState(() {
+                                task.completed = !task.completed;
+                              });
+                            },
+                          );
+                        },
+                      ),
               ),
             ],
           ),
         ),
       ),
 
+      // Tombol tambah tugas dan catatan
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        backgroundColor: const Color(0xFFFFB31A),
+        onPressed: _showAddMenu,
+        backgroundColor: const Color(0xFFFFAD16),
         foregroundColor: const Color(0xFF26364D),
         icon: const Icon(Icons.add),
         label: const Text(
@@ -214,9 +341,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: selected
-              ? Colors.white
-              : Colors.transparent,
+          color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(7),
           border: selected
               ? Border.all(

@@ -1,9 +1,9 @@
 class Task {
-  final String title;
-  final String description;
-  final String priority;
-  final String label;
-  final String deadline;
+  String title;
+  String description;
+  String priority;
+  String label;
+  String deadline;
   bool completed;
 
   Task({
