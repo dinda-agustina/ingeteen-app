@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/task.dart';
 
 class TaskCard extends StatelessWidget {
@@ -11,9 +12,13 @@ class TaskCard extends StatelessWidget {
     required this.onChanged,
   });
 
+  static const Color completedBackground = Color(0xFFF0F0F0);
+  static const Color completedBorder = Color(0xFFD2D2D2);
+  static const Color completedText = Color(0xFF888888);
+
   Color _getBorderColor() {
     if (task.completed) {
-      return Colors.green.shade400;
+      return completedBorder;
     }
 
     if (task.priority.contains('Urgent')) {
@@ -29,7 +34,7 @@ class TaskCard extends StatelessWidget {
 
   Color _getPriorityColor() {
     if (task.completed) {
-      return Colors.green.shade700;
+      return completedText;
     }
 
     if (task.priority.contains('Urgent')) {
@@ -48,10 +53,16 @@ class TaskCard extends StatelessWidget {
     final borderColor = _getBorderColor();
     final priorityColor = _getPriorityColor();
 
+    // Completed tasks always display the Completed status.
+    final displayedStatus =
+        task.completed ? 'Completed' : task.priority;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: task.completed
+            ? completedBackground
+            : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: borderColor,
@@ -79,38 +90,36 @@ class TaskCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF26364D),
+                      color: task.completed
+                          ? completedText
+                          : const Color(0xFF26364D),
                       decoration: task.completed
                           ? TextDecoration.lineThrough
                           : TextDecoration.none,
                     ),
                   ),
-
                   const SizedBox(height: 5),
-
                   Text(
                     task.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: Color(0xFF6F6F6F),
+                      color: task.completed
+                          ? completedText
+                          : const Color(0xFF6F6F6F),
                     ),
                   ),
-
                   const SizedBox(height: 6),
-
                   Text(
-                    task.priority,
+                    displayedStatus,
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: priorityColor,
                     ),
                   ),
-
                   const SizedBox(height: 5),
-
                   Row(
                     children: [
                       Container(
@@ -119,29 +128,34 @@ class TaskCard extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEAF1FA),
+                          color: task.completed
+                              ? const Color(0xFFE2E2E2)
+                              : const Color(0xFFEAF1FA),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           task.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 9,
-                            color: Color(0xFF526B8A),
+                            color: task.completed
+                                ? completedText
+                                : const Color(0xFF526B8A),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-
                       const SizedBox(width: 8),
-
                       Expanded(
                         child: Text(
                           '▣ ${task.deadline}',
-                          style: const TextStyle(
-                            fontSize: 9,
-                            color: Color(0xFF777777),
-                          ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: task.completed
+                                ? completedText
+                                : const Color(0xFF777777),
+                          ),
                         ),
                       ),
                     ],
@@ -149,16 +163,15 @@ class TaskCard extends StatelessWidget {
                 ],
               ),
             ),
-
             Positioned(
-              top: 10,
-              right: 8,
+              top: 8,
+              right: 6,
               child: Checkbox(
                 value: task.completed,
                 onChanged: (_) {
                   onChanged();
                 },
-                activeColor: const Color(0xFF26364D),
+                activeColor: completedText,
                 side: const BorderSide(
                   color: Color(0xFF8793A3),
                   width: 1.5,

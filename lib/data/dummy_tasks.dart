@@ -5,39 +5,36 @@ final List<Task> dummyTasks = [
     title: 'Tugas Struktur Data',
     description:
         'Kerjakan implementasi Quick Sort dan jelaskan proses partisi.',
-    priority: 'Urgent - Besok',
+    priority: 'Urgent - Tomorrow',
     label: 'Struktur Data',
-    deadline: '3 Okt 2026 • 23:59',
+    deadline: 'Oct 3, 2026 • 11:59 PM',
     completed: false,
   ),
-
   Task(
     title: 'Prototype Mobile',
     description:
         'Lengkapi flow dan pengujian usability untuk prototype.',
-    priority: 'Moderate deadline',
+    priority: 'Moderate Deadline',
     label: 'Project',
-    deadline: '5 Okt 2026 • 20:00',
+    deadline: 'Oct 5, 2026 • 8:00 PM',
     completed: false,
   ),
-
   Task(
     title: 'Baca Bab 4',
     description:
         'Catat poin penting mengenai manajemen memori.',
-    priority: 'Aman',
+    priority: 'Low Priority',
     label: 'Sistem Operasi',
-    deadline: '10 Okt 2026 • 17:00',
+    deadline: 'Oct 10, 2026 • 5:00 PM',
     completed: false,
   ),
-
   Task(
     title: 'Latihan Matriks',
     description:
         'Selesaikan latihan matriks dan kumpulkan hasilnya.',
-    priority: 'Completed',
+    priority: 'Low Priority',
     label: 'Kalkulus',
-    deadline: '1 Okt 2026 • 18:00',
+    deadline: 'Oct 1, 2026 • 6:00 PM',
     completed: true,
   ),
 ];
