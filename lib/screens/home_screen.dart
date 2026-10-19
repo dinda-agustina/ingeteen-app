@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../data/dummy_tasks.dart';
-import '../../providers/auth_provider.dart';
-import '../../widgets/task_card.dart';
+import '../data/dummy_tasks.dart';
+import '../providers/auth_provider.dart';
+import '../utils/app_routes.dart';
+import '../widgets/task_card.dart';
+import '../search_tasks_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 3),
                         const Text(
-                          'Semangat untuk hari ini!',
+                          'Stay focused and make today count!',
                           style: TextStyle(
                             fontSize: 10,
                             color: Color(0xFF888888),
@@ -84,156 +86,191 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 14),
 
-              Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+              InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const SearchTasksScreen(),
                     ),
-                  ],
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.search,
-                      size: 18,
-                      color: Color(0xFF888888),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Cari tugas...',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF999999),
+                  );
+                },
+                child: Container(
+                  height: 42,
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.search,
+                        size: 18,
+                        color: Color(0xFF888888),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Search tasks...',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF999999),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-
               const SizedBox(height: 18),
 
-              const Text(
-                'Tugas',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF26364D),
-                ),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Task List',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF26364D),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '${displayedTasks.length} tasks',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF888888),
+                    ),
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 3),
-
-              const Text(
-                'Atur prioritas dan tuntaskan satu per satu.',
-                style: TextStyle(
-                  fontSize: 9,
-                  color: Color(0xFF888888),
-                ),
-              ),
-
               const SizedBox(height: 12),
 
-              Container(
-                height: 38,
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1ECDD),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildTab('PENDING', 0),
-                    ),
-                    Expanded(
-                      child: _buildTab('COMPLETED', 1),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Expanded(
-                child: ListView.builder(
-                  itemCount: displayedTasks.length,
-                  itemBuilder: (context, index) {
-                    final task = displayedTasks[index];
-
-                    return TaskCard(
-                      task: task,
-                      onChanged: () {
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTab(
+                      title: 'All Tasks',
+                      isSelected: selectedTab == 0,
+                      onTap: () {
                         setState(() {
-                          task.completed = !task.completed;
+                          selectedTab = 0;
                         });
                       },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildTab(
+                      title: 'Completed',
+                      isSelected: selectedTab == 1,
+                      onTap: () {
+                        setState(() {
+                          selectedTab = 1;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              Expanded(
+                child: displayedTasks.isEmpty
+                    ? Center(
+                        child: Text(
+                          selectedTab == 0
+                              ? 'No pending tasks.'
+                              : 'No completed tasks yet.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF888888),
+                          ),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: displayedTasks.length,
+                        itemBuilder: (context, index) {
+                          final task = displayedTasks[index];
+
+                          return TaskCard(
+                            task: task,
+                            onChanged: () {
+                              setState(() {
+                                task.completed = !task.completed;
+                              });
+                            },
+                          );
+                        },
+                      ),
+              ),
+
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () {
+                    context.read<AuthProvider>().logout();
+
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AppRoutes.login,
+                      (route) => false,
                     );
                   },
+                  icon: const Icon(Icons.logout, size: 16),
+                  label: const Text('Log out'),
                 ),
               ),
             ],
           ),
         ),
       ),
-
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        backgroundColor: const Color(0xFFFFB31A),
-        foregroundColor: const Color(0xFF26364D),
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'Tambah',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
     );
   }
 
-  Widget _buildTab(String title, int index) {
-    final selected = selectedTab == index;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedTab = index;
-        });
-      },
+  Widget _buildTab({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
       child: Container(
+        height: 38,
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: selected
-              ? Colors.white
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
-          border: selected
-              ? Border.all(
-                  color: const Color(0xFFFFB31A),
-                )
-              : null,
+          color: isSelected
+              ? const Color(0xFF26364D)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: const Color(0xFFE0E0E0),
+          ),
         ),
-        child: Center(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-              color: selected
-                  ? const Color(0xFF26364D)
-                  : const Color(0xFF8A8A8A),
-            ),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? Colors.white
+                : const Color(0xFF26364D),
           ),
         ),
       ),
