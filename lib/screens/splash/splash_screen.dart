@@ -18,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     // Nanti: cek token tersimpan -> langsung ke home bila sudah login.
-    _timer = Timer(const Duration(seconds: 2), () {
+    _timer = Timer(const Duration(seconds: 5), () {
       if (mounted) Navigator.pushReplacementNamed(context, AppRoutes.login);
     });
   }
