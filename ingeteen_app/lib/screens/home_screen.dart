@@ -255,9 +255,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           onTap: () {
-            // Menutup Drawer setelah menu ditekan.
-            // Filter kategori belum diimplementasikan.
-            Navigator.pop(context);
+            final navigator = Navigator.of(context);
+            navigator.pop();
+            if (title == 'Label') {
+              navigator.pushNamed(AppRoutes.label);
+            }
           },
         ),
       );
