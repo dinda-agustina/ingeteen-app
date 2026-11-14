@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/validators.dart';
@@ -43,7 +44,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     setState(() => _submitted = true);
-    if (_usernameError != null || _passwordError != null || _confirmError != null) {
+    if (_usernameError != null ||
+        _passwordError != null ||
+        _confirmError != null) {
       return;
     }
 
@@ -93,11 +96,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
               const SizedBox(height: 28),
-              const Text('Buat akun pelajar',
-                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
+              const Text(
+                'Buat akun pelajar',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
-              const Text('Satu langkah lagi menuju hari yang lebih teratur.',
-                  style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+              const Text(
+                'Satu langkah lagi menuju hari yang lebih teratur.',
+                style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+              ),
               const SizedBox(height: 24),
               CustomTextField(
                 label: 'Username',
@@ -128,14 +135,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 16),
-              RequirementBox(items: [
-                RequirementItem('Username valid',
-                    Validators.username(_usernameC.text) == null),
-                RequirementItem('8+ karakter, huruf dan angka',
-                    Validators.password(password) == null),
-                RequirementItem('Password harus sama',
-                    password.isNotEmpty && password == _confirmC.text),
-              ]),
+              RequirementBox(
+                items: [
+                  RequirementItem(
+                    'Username valid',
+                    Validators.username(_usernameC.text) == null,
+                  ),
+                  RequirementItem(
+                    '8+ karakter, huruf dan angka',
+                    Validators.password(password) == null,
+                  ),
+                  RequirementItem(
+                    'Password harus sama',
+                    password.isNotEmpty && password == _confirmC.text,
+                  ),
+                ],
+              ),
               const SizedBox(height: 16),
               CustomButton(
                 text: 'Daftar Sekarang',
@@ -148,15 +163,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('Sudah punya akun? ',
-                        style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                    const Text(
+                      'Sudah punya akun? ',
+                      style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+                    ),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: const Text('Kembali ke Login',
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFFD4943A))),
+                      child: const Text(
+                        'Kembali ke Login',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFD4943A),
+                        ),
+                      ),
                     ),
                   ],
                 ),

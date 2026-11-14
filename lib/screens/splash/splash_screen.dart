@@ -1,5 +1,7 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../../utils/app_colors.dart';
 import '../../utils/app_routes.dart';
 import '../../widgets/app_logo.dart';
@@ -38,8 +40,10 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             AppLogo(fontSize: 26, vertical: true),
             SizedBox(height: 4),
-            Text('Schedule Your Task',
-                style: TextStyle(fontSize: 10, color: AppColors.textGrey)),
+            Text(
+              'Schedule Your Task',
+              style: TextStyle(fontSize: 10, color: AppColors.textGrey),
+            ),
           ],
         ),
       ),

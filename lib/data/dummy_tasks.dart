@@ -2,42 +2,39 @@ import '../models/task.dart';
 
 final List<Task> dummyTasks = [
   Task(
-    title: 'Tugas Struktur Data',
-    description:
-        'Kerjakan implementasi Quick Sort dan jelaskan proses partisi.',
-    priority: 'Urgent - Besok',
-    label: 'Struktur Data',
-    deadline: '3 Okt 2026 • 23:59',
+    id: '1',
+    title: 'Data Structures Assignment',
+    description: 'Implement Quick Sort and explain the partition process.',
+    priority: 'Urgent - Tomorrow',
+    label: 'Data Structures',
+    deadline: '3 Oct 2026 • 23:59',
     completed: false,
   ),
-
   Task(
-    title: 'Prototype Mobile',
-    description:
-        'Lengkapi flow dan pengujian usability untuk prototype.',
-    priority: 'Moderate deadline',
+    id: '2',
+    title: 'Mobile Prototype',
+    description: 'Complete the flow and usability testing for the prototype.',
+    priority: 'Moderate Deadline',
     label: 'Project',
-    deadline: '5 Okt 2026 • 20:00',
+    deadline: '5 Oct 2026 • 20:00',
     completed: false,
   ),
-
   Task(
-    title: 'Baca Bab 4',
-    description:
-        'Catat poin penting mengenai manajemen memori.',
-    priority: 'Aman',
-    label: 'Sistem Operasi',
-    deadline: '10 Okt 2026 • 17:00',
+    id: '3',
+    title: 'Read Chapter 4',
+    description: 'Write down important points about memory management.',
+    priority: 'Safe',
+    label: 'Operating Systems',
+    deadline: '10 Oct 2026 • 17:00',
     completed: false,
   ),
-
   Task(
-    title: 'Latihan Matriks',
-    description:
-        'Selesaikan latihan matriks dan kumpulkan hasilnya.',
+    id: '4',
+    title: 'Matrix Exercises',
+    description: 'Complete the matrix exercises and submit your answers.',
     priority: 'Completed',
-    label: 'Kalkulus',
-    deadline: '1 Okt 2026 • 18:00',
+    label: 'Calculus',
+    deadline: '1 Oct 2026 • 18:00',
     completed: true,
   ),
 ];

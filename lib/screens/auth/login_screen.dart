@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_routes.dart';
@@ -61,19 +62,28 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, constraints) => SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 48,
+              ),
               child: IntrinsicHeight(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const AppLogo(fontSize: 16),
                     const SizedBox(height: 28),
-                    const Text('Selamat datang\nkembali!',
-                        style: TextStyle(
-                            fontSize: 26, fontWeight: FontWeight.w700, height: 1.2)),
+                    const Text(
+                      'Selamat datang\nkembali!',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    const Text('Masuk untuk melanjutkan catatan dan jadwal tugasmu.',
-                        style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                    const Text(
+                      'Masuk untuk melanjutkan catatan dan jadwal tugasmu.',
+                      style: TextStyle(fontSize: 11, color: AppColors.textGrey),
+                    ),
                     const SizedBox(height: 24),
                     CustomTextField(
                       label: 'Username',
@@ -101,15 +111,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const Spacer(),
                     const Center(
-                      child: Text('Belum punya akun?',
-                          style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                      child: Text(
+                        'Belum punya akun?',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     CustomButton(
                       text: 'Daftar',
                       icon: Icons.person_add_alt_1_outlined,
                       isOutlined: true,
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, AppRoutes.register),
                     ),
                   ],
                 ),

@@ -1,16 +1,12 @@
-
 import 'package:flutter/material.dart';
+
 import '../utils/app_colors.dart';
 
 class AppLogo extends StatelessWidget {
   final double fontSize;
   final bool vertical;
 
-  const AppLogo({
-    super.key,
-    this.fontSize = 16,
-    this.vertical = false,
-  });
+  const AppLogo({super.key, this.fontSize = 16, this.vertical = false});
 
   @override
   Widget build(BuildContext context) {
@@ -30,10 +26,7 @@ class AppLogo extends StatelessWidget {
 
     final text = RichText(
       text: TextSpan(
-        style: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.w700),
         children: const [
           TextSpan(
             text: 'Inge',
@@ -50,19 +43,11 @@ class AppLogo extends StatelessWidget {
     return vertical
         ? Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              logo,
-              const SizedBox(height: 8),
-              text,
-            ],
+            children: [logo, const SizedBox(height: 8), text],
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
-            children: [
-              logo,
-              const SizedBox(width: 8),
-              text,
-            ],
+            children: [logo, const SizedBox(width: 8), text],
           );
   }
 }

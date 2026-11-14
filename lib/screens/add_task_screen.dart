@@ -1,456 +1,551 @@
 import 'package:flutter/material.dart';
 
-import '../data/dummy_tasks.dart';
 import '../models/task.dart';
+import '../services/task_service.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final Task? task;
 
-  const AddTaskScreen({
-    super.key,
-    this.task,
-  });
+  const AddTaskScreen({super.key, this.task});
 
   @override
   State<AddTaskScreen> createState() => _AddTaskScreenState();
 }
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final List<String> _labels = [
-    'Struktur Data',
-    'Pemrograman',
-    'Sistem Operasi',
-    'Project',
-    'Lainnya',
-  ];
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _labelController;
 
-  String? _selectedLabel;
+  DateTime? _selectedDeadline;
 
-  DateTime _deadline = DateTime.now().add(
-    const Duration(days: 1),
-  );
-
-  TimeOfDay _time = const TimeOfDay(
-    hour: 23,
-    minute: 59,
-  );
+  bool _isSaving = false;
 
   bool get _isEditing => widget.task != null;
+
+  static const Map<String, int> _months = <String, int>{
+    'january': 1,
+    'february': 2,
+    'march': 3,
+    'april': 4,
+    'may': 5,
+    'june': 6,
+    'july': 7,
+    'august': 8,
+    'september': 9,
+    'october': 10,
+    'november': 11,
+    'december': 12,
+    'januari': 1,
+    'februari': 2,
+    'maret': 3,
+    'mei': 5,
+    'juni': 6,
+    'juli': 7,
+    'agustus': 8,
+    'oktober': 10,
+    'desember': 12,
+  };
 
   @override
   void initState() {
     super.initState();
 
-    final task = widget.task;
+    final Task? task = widget.task;
 
-    if (task != null) {
-      _titleController.text = task.title;
-      _descriptionController.text = task.description;
+    _titleController = TextEditingController(text: task?.title ?? '');
 
-      if (_labels.contains(task.label)) {
-        _selectedLabel = task.label;
-      } else {
-        _labels.add(task.label);
-        _selectedLabel = task.label;
-      }
+    _descriptionController = TextEditingController(
+      text: task?.description ?? '',
+    );
 
-      _restoreDeadline(task.deadline);
-    }
-  }
+    _labelController = TextEditingController(text: task?.label ?? '');
 
-  void _restoreDeadline(String value) {
-    try {
-      final parts = value.split(' • ');
+    _selectedDeadline = task == null
+        ? DateTime.now().add(const Duration(days: 7))
+        : _parseDeadline(task.deadline);
 
-      if (parts.length != 2) return;
-
-      final dateParts = parts[0].split(' ');
-
-      if (dateParts.length != 3) return;
-
-      const months = {
-        'Januari': 1,
-        'Februari': 2,
-        'Maret': 3,
-        'April': 4,
-        'Mei': 5,
-        'Juni': 6,
-        'Juli': 7,
-        'Agustus': 8,
-        'September': 9,
-        'Oktober': 10,
-        'November': 11,
-        'Desember': 12,
-      };
-
-      final day = int.parse(dateParts[0]);
-      final month = months[dateParts[1]];
-      final year = int.parse(dateParts[2]);
-
-      if (month == null) return;
-
-      final date = DateTime(year, month, day);
-      final timeParts = parts[1].split(':');
-
-      if (timeParts.length != 2) return;
-
-      final hour = int.parse(timeParts[0]);
-      final minute = int.parse(timeParts[1]);
-
-      if (hour < 0 ||
-          hour > 23 ||
-          minute < 0 ||
-          minute > 59) {
-        return;
-      }
-
-      _deadline = date;
-      _time = TimeOfDay(
-        hour: hour,
-        minute: minute,
-      );
-    } catch (_) {
-      // Pengguna tetap dapat memilih tanggal dan waktu baru.
-    }
+    _selectedDeadline ??= DateTime.now().add(const Duration(days: 7));
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _labelController.dispose();
     super.dispose();
   }
 
-  String _formatDate(DateTime date) {
-    const months = [
-      'Januari',
-      'Februari',
-      'Maret',
+  // Parse existing deadline.
+  DateTime? _parseDeadline(String value) {
+    try {
+      final String normalized = value
+          .replaceAll('Ã¢â‚¬Â¢', '•')
+          .replaceAll('â€¢', '•')
+          .replaceAll('Â·', '•');
+
+      final List<String> parts = normalized.split('•');
+
+      if (parts.length != 2) {
+        return null;
+      }
+
+      final List<String> dateParts = parts[0].trim().split(RegExp(r'\s+'));
+
+      final List<String> timeParts = parts[1].trim().split(':');
+
+      if (dateParts.length != 3 || timeParts.length != 2) {
+        return null;
+      }
+
+      final int day = int.parse(dateParts[0]);
+
+      final int? month = _months[dateParts[1].toLowerCase()];
+
+      final int year = int.parse(dateParts[2]);
+
+      final int hour = int.parse(timeParts[0]);
+
+      final int minute = int.parse(timeParts[1]);
+
+      if (month == null ||
+          day < 1 ||
+          day > 31 ||
+          hour < 0 ||
+          hour > 23 ||
+          minute < 0 ||
+          minute > 59) {
+        return null;
+      }
+
+      final DateTime date = DateTime(year, month, day, hour, minute);
+
+      if (date.year != year || date.month != month || date.day != day) {
+        return null;
+      }
+
+      return date;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Format deadline.
+  String _formatDeadline(DateTime date) {
+    const List<String> months = <String>[
+      'January',
+      'February',
+      'March',
       'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
+      'May',
+      'June',
+      'July',
+      'August',
       'September',
-      'Oktober',
+      'October',
       'November',
-      'Desember',
+      'December',
     ];
 
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    final String day = date.day.toString().padLeft(2, '0');
+
+    final String month = months[date.month - 1];
+
+    final String year = date.year.toString();
+
+    final String hour = date.hour.toString().padLeft(2, '0');
+
+    final String minute = date.minute.toString().padLeft(2, '0');
+
+    return '$day $month $year • $hour:$minute';
   }
 
-  String _formatTime(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:'
-        '${time.minute.toString().padLeft(2, '0')}';
-  }
+  // Select date.
+  Future<void> _selectDate() async {
+    final DateTime now = DateTime.now();
 
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final DateTime today = DateTime(now.year, now.month, now.day);
+
+    final DateTime currentDeadline = _selectedDeadline ?? now;
+
+    final DateTime initialDate = currentDeadline.isBefore(today)
+        ? today
+        : currentDeadline;
+
+    final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _deadline,
-      firstDate: DateTime(2020),
+      initialDate: initialDate,
+      firstDate: today,
       lastDate: DateTime(2100),
+      helpText: 'Select Deadline Date',
     );
 
-    if (picked != null && mounted) {
-      setState(() {
-        _deadline = picked;
-      });
+    if (picked == null || !mounted) {
+      return;
     }
+
+    setState(() {
+      final DateTime oldTime = _selectedDeadline ?? now;
+
+      _selectedDeadline = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        oldTime.hour,
+        oldTime.minute,
+      );
+    });
   }
 
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
+  // Select time.
+  Future<void> _selectTime() async {
+    final DateTime initial = _selectedDeadline ?? DateTime.now();
+
+    final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _time,
+      initialTime: TimeOfDay.fromDateTime(initial),
+      helpText: 'Select Deadline Time',
     );
 
-    if (picked != null && mounted) {
-      setState(() {
-        _time = picked;
-      });
+    if (picked == null || !mounted) {
+      return;
     }
+
+    setState(() {
+      _selectedDeadline = DateTime(
+        initial.year,
+        initial.month,
+        initial.day,
+        picked.hour,
+        picked.minute,
+      );
+    });
   }
 
-  void _saveTask() {
+  // Save task.
+  Future<void> _saveTask() async {
+    if (_isSaving) {
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    if (_selectedLabel == null) {
+    final DateTime? deadline = _selectedDeadline;
+
+    if (deadline == null) {
+      return;
+    }
+
+    if (deadline.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pilih label tugas terlebih dahulu.'),
-        ),
+        const SnackBar(content: Text('Deadline cannot be in the past.')),
       );
       return;
     }
 
-    final deadline =
-        '${_formatDate(_deadline)} • ${_formatTime(_time)}';
+    setState(() {
+      _isSaving = true;
+    });
 
-    if (_isEditing) {
-      final task = widget.task!;
+    try {
+      final Task task = Task(
+        id: widget.task?.id,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        label: _labelController.text.trim(),
+        priority: widget.task?.priority ?? 'Medium',
+        deadline: _formatDeadline(deadline),
+        completed: widget.task?.completed ?? false,
+      );
 
-      task.title = _titleController.text.trim();
-      task.description = _descriptionController.text.trim();
-      task.label = _selectedLabel!;
-      task.deadline = deadline;
-    } else {
-      dummyTasks.add(
-        Task(
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim(),
-          priority: 'Moderate Deadline',
-          label: _selectedLabel!,
-          deadline: deadline,
+      if (_isEditing) {
+        await TaskService.updateTask(task);
+      } else {
+        await TaskService.addTask(task);
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isEditing
+                ? 'Task updated successfully.'
+                : 'Task added successfully.',
+          ),
         ),
       );
-    }
 
-    Navigator.pop(context, true);
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save task: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    const navy = Color(0xFF26364D);
-    const orange = Color(0xFFFFAD16);
-    const background = Color(0xFFF9F5E9);
+    const Color primaryColor = Color(0xFF26364D);
+    const Color accentColor = Color(0xFFFFB31A);
 
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: const Color(0xFFF9F5E9),
+
       appBar: AppBar(
-        backgroundColor: background,
-        foregroundColor: navy,
+        backgroundColor: const Color(0xFFF9F5E9),
+        foregroundColor: primaryColor,
         elevation: 0,
         title: Text(
-          _isEditing ? 'Edit Tugas' : 'Tugas Baru',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          _isEditing ? 'Edit Task' : 'Add New Task',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
-        actions: [
-          TextButton(
-            onPressed: _saveTask,
-            child: const Text(
-              'Simpan',
-              style: TextStyle(
-                color: orange,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            _fieldLabel('Judul Tugas'),
-            TextFormField(
-              controller: _titleController,
-              decoration: _inputDecoration(
-                'Masukkan judul tugas',
+
+      body: SafeArea(
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              // Task title.
+              _buildLabel('Task Title'),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: _titleController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: _inputDecoration('Enter task title', Icons.title),
+                validator: (String? value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Task title is required.';
+                  }
+
+                  return null;
+                },
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Judul tugas wajib diisi.';
-                }
 
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-            _fieldLabel('Deskripsi'),
-            TextFormField(
-              controller: _descriptionController,
-              maxLines: 4,
-              decoration: _inputDecoration(
-                'Jelaskan tugas yang harus dikerjakan...',
+              // Description.
+              _buildLabel('Description'),
+
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: _descriptionController,
+                maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: _inputDecoration(
+                  'Enter task description',
+                  Icons.description_outlined,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
 
-            _fieldLabel('Label'),
-            DropdownButtonFormField<String>(
-              initialValue: _selectedLabel,
-              decoration: _inputDecoration('Pilih label'),
-              items: _labels.map((label) {
-                return DropdownMenuItem<String>(
-                  value: label,
-                  child: Text(label),
-                );
-              }).toList(),
-              validator: (value) {
-                if (value == null) {
-                  return 'Pilih label tugas terlebih dahulu.';
-                }
+              const SizedBox(height: 20),
 
-                return null;
-              },
-              onChanged: (value) {
-                setState(() {
-                  _selectedLabel = value;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
+              // Flexible label.
+              _buildLabel('Label'),
 
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 8),
+
+              TextFormField(
+                controller: _labelController,
+                textCapitalization: TextCapitalization.words,
+                decoration: _inputDecoration(
+                  'Enter your own label',
+                  Icons.label_outline,
+                ),
+                validator: (String? value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Label is required.';
+                  }
+
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // Deadline.
+              _buildLabel('Deadline'),
+
+              const SizedBox(height: 8),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _selectDate,
+                      icon: const Icon(Icons.calendar_month),
+                      label: const Text('Select Date'),
+                      style: _outlinedButtonStyle(),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _selectTime,
+                      icon: const Icon(Icons.access_time),
+                      label: const Text('Select Time'),
+                      style: _outlinedButtonStyle(),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              if (_selectedDeadline != null)
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
                     children: [
-                      _fieldLabel('Tanggal Pengumpulan'),
-                      OutlinedButton(
-                        onPressed: _pickDate,
-                        style: _outlineStyle(),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _formatDate(_deadline),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-                            const Icon(
-                              Icons.calendar_month,
-                              size: 16,
-                            ),
-                          ],
+                      const Icon(
+                        Icons.event_available,
+                        color: primaryColor,
+                        size: 20,
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: Text(
+                          _formatDeadline(_selectedDeadline!),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _fieldLabel('Waktu Pengumpulan'),
-                      OutlinedButton(
-                        onPressed: _pickTime,
-                        style: _outlineStyle(),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _formatTime(_time),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ),
-                            const Icon(
-                              Icons.access_time,
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+
+              const SizedBox(height: 35),
+
+              // Save button.
+              SizedBox(
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: _isSaving ? null : _saveTask,
+
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: primaryColor,
+                          ),
+                        )
+                      : Icon(_isEditing ? Icons.save : Icons.add),
+
+                  label: Text(
+                    _isSaving
+                        ? 'Saving...'
+                        : _isEditing
+                        ? 'Save Changes'
+                        : 'Add Task',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    foregroundColor: primaryColor,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            ElevatedButton(
-              onPressed: _saveTask,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: orange,
-                foregroundColor: navy,
-                minimumSize: const Size(
-                  double.infinity,
-                  46,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
               ),
-              child: Text(
-                _isEditing
-                    ? 'Simpan Perubahan'
-                    : 'Simpan Tugas',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _fieldLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 7),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF26364D),
-        ),
+  // Form label.
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF26364D),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  // Input decoration.
+  InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        fontSize: 12,
-        color: Colors.grey,
-      ),
+      hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF999999)),
+
+      prefixIcon: Icon(icon, size: 19, color: const Color(0xFF7D8999)),
+
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.all(13),
+
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide.none,
       ),
+
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Color(0xFFE4E1D8),
-        ),
+        borderSide: BorderSide.none,
       ),
+
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(
-          color: Color(0xFFFFAD16),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFFFFB31A), width: 1.5),
       ),
     );
   }
 
-  ButtonStyle _outlineStyle() {
+  // Outlined button style.
+  ButtonStyle _outlinedButtonStyle() {
     return OutlinedButton.styleFrom(
       foregroundColor: const Color(0xFF26364D),
-      backgroundColor: Colors.white,
-      minimumSize: const Size(double.infinity, 42),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      side: const BorderSide(
-        color: Color(0xFFE4E1D8),
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
+      side: const BorderSide(color: Color(0xFFFFB31A)),
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     );
   }
 }

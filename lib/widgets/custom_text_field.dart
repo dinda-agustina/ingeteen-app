@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../utils/app_colors.dart';
 
 class CustomTextField extends StatefulWidget {
@@ -31,9 +32,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
   bool _obscure = true;
 
   OutlineInputBorder _border(Color c) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: c),
-      );
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide(color: c),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +42,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(
+          widget.label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         TextField(
           controller: widget.controller,
@@ -61,27 +64,41 @@ class _CustomTextFieldState extends State<CustomTextField> {
             suffixIcon: widget.isPassword
                 ? IconButton(
                     icon: Icon(
-                      _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       size: 18,
                       color: AppColors.textGrey,
                     ),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   )
                 : null,
-            enabledBorder: _border(hasError ? AppColors.urgent : AppColors.border),
-            focusedBorder: _border(hasError ? AppColors.urgent : AppColors.primary),
+            enabledBorder: _border(
+              hasError ? AppColors.urgent : AppColors.border,
+            ),
+            focusedBorder: _border(
+              hasError ? AppColors.urgent : AppColors.primary,
+            ),
           ),
         ),
         if (hasError) ...[
           const SizedBox(height: 6),
-          Row(children: [
-            const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.urgent),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(widget.errorText!,
-                  style: const TextStyle(fontSize: 10, color: AppColors.urgent)),
-            ),
-          ]),
+          Row(
+            children: [
+              const Icon(
+                Icons.warning_amber_rounded,
+                size: 14,
+                color: AppColors.urgent,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  widget.errorText!,
+                  style: const TextStyle(fontSize: 10, color: AppColors.urgent),
+                ),
+              ),
+            ],
+          ),
         ],
       ],
     );

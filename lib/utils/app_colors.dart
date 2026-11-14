@@ -16,12 +16,11 @@ class AppColors {
   static const safe = Color(0xFF6BE05A);
 
   static const labelPalatte = <String>[
-    '#8CB4FF', 
-    '#FFE066', 
-    '#FFB017', 
-    '#6BE86A', 
-    '#D4943A', 
-    '#E55A5A', 
+    '#8CB4FF',
+    '#FFE066',
+    '#FFB017',
+    '#6BE86A',
+    '#D4943A',
+    '#E55A5A',
   ];
-
 }
