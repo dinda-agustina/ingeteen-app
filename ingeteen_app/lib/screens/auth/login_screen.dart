@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_routes.dart';
+import '../../utils/validators.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -17,7 +18,15 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _usernameC = TextEditingController();
   final _passwordC = TextEditingController();
-  String? _error;
+
+  bool _submitted = false;
+  String? _serverError;
+
+  String? get _usernameError =>
+      !_submitted ? null : Validators.username(_usernameC.text);
+
+  String? get _passwordError =>
+      !_submitted ? null : Validators.password(_passwordC.text);
 
   @override
   void dispose() {
@@ -26,28 +35,38 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _clearError(String _) {
-    if (_error != null) setState(() => _error = null);
+  void _onChanged(String _) {
+    setState(() => _serverError = null);
   }
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
-    final username = _usernameC.text.trim();
-    final password = _passwordC.text;
 
-    if (username.isEmpty || password.isEmpty) {
-      setState(() => _error = 'Username dan password wajib diisi.');
+    setState(() {
+      _submitted = true;
+      _serverError = null;
+    });
+
+    if (_usernameError != null || _passwordError != null) {
       return;
     }
 
     final auth = context.read<AuthProvider>();
-    final ok = await auth.login(username, password);
+    final ok = await auth.login(
+      _usernameC.text.trim(),
+      _passwordC.text,
+    );
+
     if (!mounted) return;
 
     if (ok) {
-      Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false);
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.home,
+        (_) => false,
+      );
     } else {
-      setState(() => _error = auth.error);
+      setState(() => _serverError = auth.error);
     }
   }
 
@@ -61,26 +80,39 @@ class _LoginScreenState extends State<LoginScreen> {
           builder: (context, constraints) => SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 48,
+              ),
               child: IntrinsicHeight(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const AppLogo(fontSize: 16),
                     const SizedBox(height: 28),
-                    const Text('Selamat datang\nkembali!',
-                        style: TextStyle(
-                            fontSize: 26, fontWeight: FontWeight.w700, height: 1.2)),
+                    const Text(
+                      'Selamat datang\nkembali!',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    const Text('Masuk untuk melanjutkan catatan dan jadwal tugasmu.',
-                        style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                    const Text(
+                      'Masuk untuk melanjutkan catatan dan jadwal tugasmu.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textGrey,
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     CustomTextField(
                       label: 'Username',
                       hint: '',
                       controller: _usernameC,
                       prefixIcon: Icons.person_outline,
-                      onChanged: _clearError,
+                      errorText: _usernameError,
+                      onChanged: _onChanged,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -89,8 +121,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordC,
                       prefixIcon: Icons.lock_outline,
                       isPassword: true,
-                      errorText: _error,
-                      onChanged: _clearError,
+                      errorText: _passwordError ?? _serverError,
+                      onChanged: _onChanged,
                     ),
                     const SizedBox(height: 20),
                     CustomButton(
@@ -101,15 +133,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const Spacer(),
                     const Center(
-                      child: Text('Belum punya akun?',
-                          style: TextStyle(fontSize: 11, color: AppColors.textGrey)),
+                      child: Text(
+                        'Belum punya akun?',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textGrey,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     CustomButton(
                       text: 'Daftar',
                       icon: Icons.person_add_alt_1_outlined,
                       isOutlined: true,
-                      onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                      onPressed: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.register,
+                      ),
                     ),
                   ],
                 ),
