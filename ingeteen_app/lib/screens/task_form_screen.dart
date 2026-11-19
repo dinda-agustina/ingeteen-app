@@ -70,7 +70,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             DummyData.user.id;
 
     final labels =
-        context.read<LabelProvider>().labelsForUser(userId);
+        context.read<LabelProvider>().getLabelsForUser(userId);
 
     if (_selectedLabelId == null &&
         widget.task?.labelName != null) {
@@ -654,7 +654,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
 
     LabelModel? selectedLabel;
 
-    for (final label in labelProvider.labelsForUser(userId)) {
+    for (final label in labelProvider.getLabelsForUser(userId)) {
       if (label.id == _selectedLabelId) {
         selectedLabel = label;
         break;
@@ -804,7 +804,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
 
     final labels = context
         .watch<LabelProvider>()
-        .labelsForUser(userId);
+        .getLabelsForUser(userId);
 
     final selectedLabelId = labels.any(
       (label) => label.id == _selectedLabelId,

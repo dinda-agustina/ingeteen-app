@@ -25,6 +25,8 @@ class IngeTeenApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => LabelProvider(),
         ),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => LabelProvider()),
       ],
       child: MaterialApp(
         title: 'IngeTeen',

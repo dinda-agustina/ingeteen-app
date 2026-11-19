@@ -533,7 +533,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           onTap: () {
-            Navigator.pop(context);
+            final navigator = Navigator.of(context);
+            navigator.pop();
+            if (title == 'Label') {
+              navigator.pushNamed(AppRoutes.label);
+            }
           },
         ),
       );
