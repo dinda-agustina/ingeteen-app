@@ -7,6 +7,7 @@ import '../providers/task_provider.dart';
 import '../utils/app_routes.dart';
 import '../widgets/task_card.dart';
 import 'task_form_screen.dart';
+import 'task_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
       TextEditingController();
 
   String searchQuery = '';
+
   late final String greeting;
 
   @override
@@ -44,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // Greeting based on current time and day.
   String _getGreeting() {
     final hour = DateTime.now().hour;
     final day = DateTime.now().day;
@@ -79,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return greetings[day % greetings.length];
   }
 
+  // Open Add Task or Edit Task form.
   Future<void> _openTaskForm({TaskModel? task}) async {
     await Navigator.push(
       context,
@@ -88,55 +92,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _confirmDelete(TaskModel task) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Delete Task',
-          style: TextStyle(
-            color: navy,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${task.judul}"?',
-          style: const TextStyle(color: navy),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: mutedText),
-            ),
-          ),
-          TextButton(
-            onPressed: () =>
-                Navigator.pop(dialogContext, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+  // Open Task Detail page.
+  Future<void> _openTaskDetail(TaskModel task) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TaskDetailScreen(task: task),
       ),
     );
-
-    if (confirmed == true && mounted) {
-      context.read<TaskProvider>().deleteTask(task.id);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task deleted successfully.'),
-        ),
-      );
-    }
   }
 
   @override
@@ -146,12 +109,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final allTasks = taskProvider.tasks;
 
+    // Select tasks based on the active tab.
     final tabTasks = selectedTab == 0
         ? taskProvider.pendingTasks
         : taskProvider.completedTasks;
 
-    final query = searchQuery.toLowerCase();
+    final query = searchQuery.trim().toLowerCase();
 
+    // Search by title, description, and label.
     final filteredTasks = tabTasks.where((task) {
       final title = task.judul.toLowerCase();
       final description = task.deskripsi.toLowerCase();
@@ -164,10 +129,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: cream,
+
       drawer: _buildDrawer(
         context,
         user?.username ?? 'User',
       ),
+
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -193,7 +160,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       constraints: const BoxConstraints(),
                     ),
                   ),
+
                   const SizedBox(width: 8),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment:
@@ -220,6 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
+
                   Container(
                     width: 40,
                     height: 40,
@@ -267,13 +237,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 19,
                       color: mutedText,
                     ),
+
                     const SizedBox(width: 8),
+
                     Expanded(
                       child: TextField(
                         controller: _searchController,
                         onChanged: (value) {
                           setState(() {
-                            searchQuery = value.trim();
+                            searchQuery = value;
                           });
                         },
                         decoration: const InputDecoration(
@@ -291,10 +263,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+
                     if (searchQuery.isNotEmpty)
                       IconButton(
                         onPressed: () {
                           _searchController.clear();
+
                           setState(() {
                             searchQuery = '';
                           });
@@ -358,53 +332,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Task list and empty states.
               Expanded(
-                child: allTasks.isEmpty
-                    ? _buildEmptyState(
-                        icon: Icons.note_add_outlined,
-                        title: 'No tasks yet',
-                        message:
-                            'Your task list is empty. Add your first task and start organizing your day.',
-                        showButton: true,
-                      )
-                    : filteredTasks.isEmpty
-                        ? _buildEmptyState(
-                            icon: searchQuery.isNotEmpty
-                                ? Icons.search_off
-                                : Icons.task_alt,
-                            title: searchQuery.isNotEmpty
-                                ? 'No matching tasks'
-                                : selectedTab == 0
-                                    ? 'No pending tasks'
-                                    : 'No completed tasks',
-                            message: searchQuery.isNotEmpty
-                                ? 'Try another keyword to find your task.'
-                                : selectedTab == 0
-                                    ? 'You have no pending tasks right now.'
-                                    : 'Your completed tasks will appear here.',
-                          )
-                        : ListView.builder(
-                            itemCount: filteredTasks.length,
-                            itemBuilder: (context, index) {
-                              final task = filteredTasks[index];
+                child: filteredTasks.isNotEmpty
+                    ? ListView.builder(
+                        itemCount: filteredTasks.length,
+                        itemBuilder: (context, index) {
+                          final task = filteredTasks[index];
 
-                              return TaskCard(
-                                task: task,
-                                labelName:
-                                    task.labelName?.trim() ?? '',
-                                onChanged: () {
-                                  context
-                                      .read<TaskProvider>()
-                                      .toggleTaskStatus(task.id);
-                                },
-                                onEdit: () {
-                                  _openTaskForm(task: task);
-                                },
-                                onDelete: () {
-                                  _confirmDelete(task);
-                                },
-                              );
+                          return TaskCard(
+                            task: task,
+                            labelName:
+                                task.labelName?.trim() ?? '',
+                            onChanged: () {
+                              context
+                                  .read<TaskProvider>()
+                                  .toggleTaskStatus(task.id);
                             },
-                          ),
+                            onTap: () {
+                              _openTaskDetail(task);
+                            },
+                          );
+                        },
+                      )
+                    : _buildEmptyState(
+                        icon: searchQuery.trim().isNotEmpty
+                            ? Icons.search_off
+                            : selectedTab == 1
+                                ? Icons.task_alt
+                                : allTasks.isEmpty
+                                    ? Icons.note_add_outlined
+                                    : Icons.task_alt,
+                        title: searchQuery.trim().isNotEmpty
+                            ? 'No matching tasks'
+                            : selectedTab == 1
+                                ? 'No completed tasks'
+                                : allTasks.isEmpty
+                                    ? 'No tasks yet'
+                                    : 'No pending tasks',
+                        message: searchQuery.trim().isNotEmpty
+                            ? 'Try another keyword to find your task.'
+                            : selectedTab == 1
+                                ? 'Your completed tasks will appear here.'
+                                : allTasks.isEmpty
+                                    ? 'Your task list is empty. Add your first task and start organizing your day.'
+                                    : 'You have no pending tasks right now.',
+                      ),
               ),
             ],
           ),
@@ -420,7 +391,9 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: const Icon(Icons.add),
         label: const Text(
           'Add Task',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -431,7 +404,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required IconData icon,
     required String title,
     required String message,
-    bool showButton = false,
   }) {
     return Center(
       child: SingleChildScrollView(
@@ -451,7 +423,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: navy,
               ),
             ),
+
             const SizedBox(height: 20),
+
             Text(
               title,
               textAlign: TextAlign.center,
@@ -461,7 +435,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: navy,
               ),
             ),
+
             const SizedBox(height: 8),
+
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 24,
@@ -476,26 +452,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            if (showButton) ...[
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () => _openTaskForm(),
-                icon: const Icon(Icons.add),
-                label: const Text('Create Your First Task'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: orange,
-                  foregroundColor: navy,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -612,7 +568,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
+
                   const SizedBox(width: 12),
+
                   const Text(
                     'Inge',
                     style: TextStyle(
@@ -621,6 +579,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const Text(
                     'Teen',
                     style: TextStyle(
@@ -708,7 +667,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+
                     const SizedBox(width: 12),
+
                     Expanded(
                       child: Column(
                         crossAxisAlignment:
@@ -722,7 +683,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+
                           const SizedBox(height: 3),
+
                           const Text(
                             'Profile Settings',
                             style: TextStyle(
@@ -733,6 +696,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
+
                     IconButton(
                       tooltip: 'Log out',
                       onPressed: () {

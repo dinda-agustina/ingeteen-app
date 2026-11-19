@@ -6,11 +6,14 @@ class TaskProvider extends ChangeNotifier {
   // The application starts with an empty task list.
   final List<TaskModel> _tasks = [];
 
+  // Get all tasks.
   List<TaskModel> get tasks => List.unmodifiable(_tasks);
 
+  // Get pending tasks.
   List<TaskModel> get pendingTasks =>
       _tasks.where((task) => !task.isCompleted).toList();
 
+  // Get completed tasks.
   List<TaskModel> get completedTasks =>
       _tasks.where((task) => task.isCompleted).toList();
 
@@ -22,14 +25,15 @@ class TaskProvider extends ChangeNotifier {
     required String judul,
     required String deskripsi,
     required DateTime deadline,
+    bool isCompleted = false,
   }) {
     final now = DateTime.now();
 
     final newId = _tasks.isEmpty
         ? 1
-        : _tasks.map((task) => task.id).reduce(
-              (a, b) => a > b ? a : b,
-            ) +
+        : _tasks
+                .map((task) => task.id)
+                .reduce((a, b) => a > b ? a : b) +
             1;
 
     final newTask = TaskModel(
@@ -40,11 +44,13 @@ class TaskProvider extends ChangeNotifier {
       judul: judul.trim(),
       deskripsi: deskripsi.trim(),
       deadline: deadline,
+      isCompleted: isCompleted,
       createdAt: now,
       updatedAt: now,
     );
 
     _tasks.add(newTask);
+
     notifyListeners();
   }
 
@@ -57,8 +63,11 @@ class TaskProvider extends ChangeNotifier {
     required String judul,
     required String deskripsi,
     required DateTime deadline,
+    bool? isCompleted,
   }) {
-    final index = _tasks.indexWhere((task) => task.id == id);
+    final index = _tasks.indexWhere(
+      (task) => task.id == id,
+    );
 
     if (index == -1) return;
 
@@ -69,6 +78,7 @@ class TaskProvider extends ChangeNotifier {
       judul: judul.trim(),
       deskripsi: deskripsi.trim(),
       deadline: deadline,
+      isCompleted: isCompleted,
     );
 
     notifyListeners();
@@ -76,13 +86,22 @@ class TaskProvider extends ChangeNotifier {
 
   // Delete a task.
   void deleteTask(int id) {
-    _tasks.removeWhere((task) => task.id == id);
-    notifyListeners();
+    final initialLength = _tasks.length;
+
+    _tasks.removeWhere(
+      (task) => task.id == id,
+    );
+
+    if (_tasks.length != initialLength) {
+      notifyListeners();
+    }
   }
 
   // Change task completion status.
   void toggleTaskStatus(int id) {
-    final index = _tasks.indexWhere((task) => task.id == id);
+    final index = _tasks.indexWhere(
+      (task) => task.id == id,
+    );
 
     if (index == -1) return;
 
@@ -95,6 +114,33 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Find a task by ID.
+  TaskModel? getTaskById(int id) {
+    try {
+      return _tasks.firstWhere(
+        (task) => task.id == id,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Search tasks by title, description, or label.
+  List<TaskModel> searchTasks(String query) {
+    final keyword = query.trim().toLowerCase();
+
+    if (keyword.isEmpty) {
+      return tasks;
+    }
+
+    return _tasks.where((task) {
+      return task.judul.toLowerCase().contains(keyword) ||
+          task.deskripsi.toLowerCase().contains(keyword) ||
+          (task.labelName ?? '').toLowerCase().contains(keyword);
+    }).toList();
+  }
+
+  // Normalize label values.
   String? _normalizeLabel(String? value) {
     final label = value?.trim();
 
