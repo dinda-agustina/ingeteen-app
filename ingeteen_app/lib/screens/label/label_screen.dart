@@ -26,77 +26,195 @@ class _LabelScreenState extends State<LabelScreen> {
   Future<void> _openCreateLabelScreen(int userId) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => CreateLabelScreen(userId: userId),
-      ),
+      MaterialPageRoute(builder: (_) => CreateLabelScreen(userId: userId)),
     );
 
     if (!mounted || result != true) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Label added successfully.'),
-      ),
-    );
   }
 
-  Future<void> _showEditLabelDialog(
-    LabelModel label,
-    int userId,
-  ) async {
+  Future<void> _showEditLabelDialog(LabelModel label, int userId) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _EditLabelSheet(
-        label: label,
-        userId: userId,
-      ),
+      builder: (_) => _EditLabelSheet(label: label, userId: userId),
     );
 
     if (!mounted || result != true) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Label updated successfully.'),
-      ),
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: const Color(0xFFFFFEFC),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE8F5EA),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    color: Color(0xFF23823B),
+                    size: 25,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Label Edited',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF101C3C),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Your label has been updated successfully.\n'
+                  "You're all set!",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 10,
+                    height: 1.6,
+                    color: Color(0xFF777777),
+                  ),
+                ),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFA800),
+                      foregroundColor: const Color(0xFF101C3C),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Future<void> _showDeleteLabelDialog(
-    LabelModel label,
-    int userId,
-  ) async {
-    final taskCount = _getTaskCount(userId, label.id);
-
+  Future<void> _showDeleteLabelDialog(LabelModel label, int userId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Label'),
-          content: Text(
-            taskCount > 0
-                ? 'Are you sure you want to delete the label '
-                    '"${label.namaLabel}"?\n\n'
-                    '$taskCount tasks using this label will remain saved, '
-                    'but will no longer be associated with it.'
-                : 'Are you sure you want to delete the label '
-                    '"${label.namaLabel}"?',
+        return Dialog(
+          backgroundColor: const Color(0xFFFFFEFC),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFF0F0),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFFF4242),
+                    size: 23,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Delete label?',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF101C3C),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'This label will be removed from your labels. '
+                  'Existing tasks will remain saved.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.6,
+                    color: Color(0xFF526078),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(dialogContext, false);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 46),
+                          foregroundColor: const Color(0xFF101C3C),
+                          side: const BorderSide(color: Color(0xFF101C3C)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(dialogContext, true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 46),
+                          backgroundColor: const Color(0xFFFFF2F2),
+                          foregroundColor: const Color(0xFFD92828),
+                          elevation: 0,
+                          side: const BorderSide(color: Color(0xFFFF4242)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
+          ),
         );
       },
     );
@@ -104,18 +222,92 @@ class _LabelScreenState extends State<LabelScreen> {
     if (!mounted || confirmed != true) return;
 
     final success = context.read<LabelProvider>().deleteLabel(
-          userId: userId,
-          labelId: label.id,
-        );
+      userId: userId,
+      labelId: label.id,
+    );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Label deleted successfully.'
-              : 'Failed to delete label.',
-        ),
-      ),
+    if (!mounted) return;
+
+    if (!success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to delete label.')));
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: const Color(0xFFFFFEFC),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE8F5EA),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    color: Color(0xFF087B32),
+                    size: 29,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  'Label Deleted',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF101C3C),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Your label has been successfully deleted.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.6,
+                    color: Color(0xFF555555),
+                  ),
+                ),
+                const SizedBox(height: 26),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFA800),
+                      foregroundColor: const Color(0xFF101C3C),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -123,10 +315,7 @@ class _LabelScreenState extends State<LabelScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => LabelDetailScreen(
-          label: label,
-          userId: userId,
-        ),
+        builder: (_) => LabelDetailScreen(label: label, userId: userId),
       ),
     );
   }
@@ -140,10 +329,7 @@ class _LabelScreenState extends State<LabelScreen> {
         icon: const Icon(Icons.add, size: 18),
         label: const Text(
           'Add Label',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFFA800),
@@ -188,10 +374,7 @@ class _LabelScreenState extends State<LabelScreen> {
           const Text(
             'Create labels to organize notes and tasks.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFF8C8C8C),
-              fontSize: 10,
-            ),
+            style: TextStyle(color: Color(0xFF8C8C8C), fontSize: 10),
           ),
         ],
       ),
@@ -206,16 +389,11 @@ class _LabelScreenState extends State<LabelScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFEAE7E2),
-        ),
+        border: Border.all(color: const Color(0xFFEAE7E2)),
       ),
       child: ListTile(
         onTap: () => _openLabelDetail(label, userId),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 6,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: Container(
           width: 42,
           height: 42,
@@ -236,17 +414,11 @@ class _LabelScreenState extends State<LabelScreen> {
           padding: const EdgeInsets.only(top: 4),
           child: Text(
             'Tasks • $taskCount',
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF99918B),
-            ),
+            style: const TextStyle(fontSize: 11, color: Color(0xFF99918B)),
           ),
         ),
         trailing: PopupMenuButton<String>(
-          icon: const Icon(
-            Icons.more_vert,
-            color: Color(0xFF99918B),
-          ),
+          icon: const Icon(Icons.more_vert, color: Color(0xFF99918B)),
           onSelected: (value) {
             if (value == 'edit') {
               _showEditLabelDialog(label, userId);
@@ -269,16 +441,9 @@ class _LabelScreenState extends State<LabelScreen> {
               value: 'delete',
               child: Row(
                 children: [
-                  Icon(
-                    Icons.delete_outline,
-                    size: 18,
-                    color: Colors.red,
-                  ),
+                  Icon(Icons.delete_outline, size: 18, color: Colors.red),
                   SizedBox(width: 10),
-                  Text(
-                    'Delete Label',
-                    style: TextStyle(color: Colors.red),
-                  ),
+                  Text('Delete Label', style: TextStyle(color: Colors.red)),
                 ],
               ),
             ),
@@ -294,11 +459,7 @@ class _LabelScreenState extends State<LabelScreen> {
     final labelProvider = context.watch<LabelProvider>();
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(
-          child: Text('Please log in first.'),
-        ),
-      );
+      return const Scaffold(body: Center(child: Text('Please log in first.')));
     }
 
     final userLabels = labelProvider.getLabelsForUser(user.id);
@@ -335,10 +496,7 @@ class _LabelScreenState extends State<LabelScreen> {
               const SizedBox(height: 6),
               const Text(
                 'Create and organize your tasks.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF99918B),
-                ),
+                style: TextStyle(fontSize: 14, color: Color(0xFF99918B)),
               ),
               if (hasLabels) ...[
                 const SizedBox(height: 24),
@@ -349,17 +507,12 @@ class _LabelScreenState extends State<LabelScreen> {
                     padding: EdgeInsets.zero,
                     itemCount: userLabels.length,
                     itemBuilder: (context, index) {
-                      return _buildLabelCard(
-                        userLabels[index],
-                        user.id,
-                      );
+                      return _buildLabelCard(userLabels[index], user.id);
                     },
                   ),
                 ),
               ] else ...[
-                Expanded(
-                  child: _buildEmptyState(),
-                ),
+                Expanded(child: _buildEmptyState()),
                 const SizedBox(height: 12),
                 _buildAddLabelButton(user.id),
               ],
@@ -406,8 +559,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
     _tasks = DummyData.tasks
         .where(
           (task) =>
-              task.userId == widget.userId &&
-              task.labelId == widget.label.id,
+              task.userId == widget.userId && task.labelId == widget.label.id,
         )
         .toList();
   }
@@ -430,9 +582,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
 
       if (index == -1) return;
 
-      _tasks[index] = task.copyWith(
-        isCompleted: value ?? false,
-      );
+      _tasks[index] = task.copyWith(isCompleted: value ?? false);
     });
   }
 
@@ -474,9 +624,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: isSelected
-                ? Border.all(color: _orange, width: 1)
-                : null,
+            border: isSelected ? Border.all(color: _orange, width: 1) : null,
           ),
           child: Text(
             title,
@@ -504,10 +652,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(
-          color: borderColor,
-          width: completed ? 1 : 1.3,
-        ),
+        border: Border.all(color: borderColor, width: completed ? 1 : 1.3),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.035),
@@ -529,8 +674,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                     color: _navy,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    decoration:
-                        completed ? TextDecoration.lineThrough : null,
+                    decoration: completed ? TextDecoration.lineThrough : null,
                     decorationColor: _navy,
                   ),
                 ),
@@ -543,10 +687,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                   onChanged: (value) => _toggleTask(task, value),
                   activeColor: const Color(0xFF52677F),
                   checkColor: Colors.white,
-                  side: const BorderSide(
-                    color: Color(0xFF52677F),
-                    width: 1.3,
-                  ),
+                  side: const BorderSide(color: Color(0xFF52677F), width: 1.3),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5),
                   ),
@@ -562,8 +703,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
               style: TextStyle(
                 color: completed ? _grey : const Color(0xFF777777),
                 fontSize: 9,
-                decoration:
-                    completed ? TextDecoration.lineThrough : null,
+                decoration: completed ? TextDecoration.lineThrough : null,
               ),
             ),
           ],
@@ -574,18 +714,15 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
               color: completed
                   ? const Color(0xFF52677F)
                   : task.deadlineLevel == DeadlineLevel.urgent
-                      ? const Color(0xFF9A6500)
-                      : const Color(0xFF238A37),
+                  ? const Color(0xFF9A6500)
+                  : const Color(0xFF238A37),
               fontSize: 9,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 7),
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 9,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             decoration: BoxDecoration(
               color: widget.label.color.withValues(alpha: 0.28),
               borderRadius: BorderRadius.circular(20),
@@ -602,19 +739,11 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
           const SizedBox(height: 7),
           Row(
             children: [
-              const Icon(
-                Icons.calendar_today_outlined,
-                size: 10,
-                color: _grey,
-              ),
+              const Icon(Icons.calendar_today_outlined, size: 10, color: _grey),
               const SizedBox(width: 5),
               Text(
-                DateFormat('d MMM yyyy • HH:mm', 'en_US')
-                    .format(task.deadline),
-                style: const TextStyle(
-                  color: _grey,
-                  fontSize: 9,
-                ),
+                DateFormat('d MMM yyyy • HH:mm', 'en_US').format(task.deadline),
+                style: const TextStyle(color: _grey, fontSize: 9),
               ),
             ],
           ),
@@ -634,11 +763,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: _navy,
-            size: 21,
-          ),
+          icon: const Icon(Icons.arrow_back, color: _navy, size: 21),
         ),
         title: Text(
           widget.label.namaLabel,
@@ -665,10 +790,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
             const SizedBox(height: 5),
             Text(
               '${_tasks.length} tasks',
-              style: const TextStyle(
-                color: _grey,
-                fontSize: 9,
-              ),
+              style: const TextStyle(color: _grey, fontSize: 9),
             ),
             const SizedBox(height: 14),
             Container(
@@ -678,24 +800,49 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                 borderRadius: BorderRadius.circular(9),
               ),
               child: Row(
-                children: [
-                  _buildTab('PENDING', 0),
-                  _buildTab('COMPLETED', 1),
-                ],
+                children: [_buildTab('PENDING', 0), _buildTab('COMPLETED', 1)],
               ),
             ),
             const SizedBox(height: 12),
             Expanded(
               child: tasks.isEmpty
                   ? Center(
-                      child: Text(
-                        _selectedTab == 0
-                            ? 'No pending tasks.'
-                            : 'No completed tasks.',
-                        style: const TextStyle(
-                          color: _grey,
-                          fontSize: 12,
-                        ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1EFE3),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: const Icon(
+                              Icons.label_outline,
+                              size: 30,
+                              color: Color(0xFF26364D),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _selectedTab == 0
+                                ? 'No pending tasks'
+                                : 'No completed tasks',
+                            style: const TextStyle(
+                              color: Color(0xFF26364D),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _selectedTab == 0
+                                ? 'Tasks with this label will appear here.'
+                                : 'Completed tasks with this label will appear here.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: _grey, fontSize: 12),
+                          ),
+                        ],
                       ),
                     )
                   : ListView.builder(
@@ -721,10 +868,7 @@ class _EditLabelSheet extends StatefulWidget {
   final LabelModel label;
   final int userId;
 
-  const _EditLabelSheet({
-    required this.label,
-    required this.userId,
-  });
+  const _EditLabelSheet({required this.label, required this.userId});
 
   @override
   State<_EditLabelSheet> createState() => _EditLabelSheetState();
@@ -758,9 +902,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
   void initState() {
     super.initState();
 
-    _nameController = TextEditingController(
-      text: widget.label.namaLabel,
-    );
+    _nameController = TextEditingController(text: widget.label.namaLabel);
 
     _selectedColor = _colors.contains(widget.label.kodeWarna)
         ? widget.label.kodeWarna
@@ -776,12 +918,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
   Color _parseColor(String hex) {
     final value = hex.replaceFirst('#', '');
 
-    return Color(
-      int.parse(
-        value.length == 6 ? 'FF$value' : value,
-        radix: 16,
-      ),
-    );
+    return Color(int.parse(value.length == 6 ? 'FF$value' : value, radix: 16));
   }
 
   Future<void> _saveLabel() async {
@@ -807,12 +944,12 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
 
     try {
       success = context.read<LabelProvider>().updateLabel(
-            userId: widget.userId,
-            labelId: widget.label.id,
-            labelName: _nameController.text.trim(),
-            colorCode: _selectedColor,
-            clearColor: _selectedColor == null,
-          );
+        userId: widget.userId,
+        labelId: widget.label.id,
+        labelName: _nameController.text.trim(),
+        colorCode: _selectedColor,
+        clearColor: _selectedColor == null,
+      );
     } catch (_) {
       success = false;
     }
@@ -875,11 +1012,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                       : null,
                 ),
                 child: isSelected
-                    ? const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 19,
-                      )
+                    ? const Icon(Icons.check, color: Colors.white, size: 19)
                     : null,
               ),
             ),
@@ -902,9 +1035,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
         decoration: const BoxDecoration(
           color: _cream,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(24),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
           top: false,
@@ -939,11 +1070,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                       onPressed: _isSaving
                           ? null
                           : () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.close,
-                        color: _navy,
-                        size: 21,
-                      ),
+                      icon: const Icon(Icons.close, color: _navy, size: 21),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -963,10 +1090,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                   controller: _nameController,
                   enabled: !_isSaving,
                   textCapitalization: TextCapitalization.words,
-                  style: const TextStyle(
-                    color: _navy,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: _navy, fontSize: 12),
                   decoration: InputDecoration(
                     hintText: 'Label name',
                     hintStyle: const TextStyle(
@@ -980,8 +1104,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                       vertical: 12,
                     ),
                     suffixIcon: IconButton(
-                      onPressed:
-                          _isSaving ? null : _nameController.clear,
+                      onPressed: _isSaving ? null : _nameController.clear,
                       icon: const Icon(
                         Icons.cancel_outlined,
                         size: 16,
@@ -990,15 +1113,11 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE8E2D8),
-                      ),
+                      borderSide: const BorderSide(color: Color(0xFFE8E2D8)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE8E2D8),
-                      ),
+                      borderSide: const BorderSide(color: Color(0xFFE8E2D8)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -1006,9 +1125,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(
-                        color: Colors.redAccent,
-                      ),
+                      borderSide: const BorderSide(color: Colors.redAccent),
                     ),
                   ),
                   validator: (value) {
@@ -1042,8 +1159,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _orange,
                       foregroundColor: _navy,
-                      disabledBackgroundColor:
-                          _orange.withValues(alpha: 0.6),
+                      disabledBackgroundColor: _orange.withValues(alpha: 0.6),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(11),
@@ -1078,14 +1194,9 @@ class _SavingLabelDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFFFFFEFC),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 30,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
