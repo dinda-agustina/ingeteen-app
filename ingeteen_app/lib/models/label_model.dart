@@ -20,23 +20,23 @@ class LabelModel {
       : Color(int.parse(kodeWarna!.replaceFirst('#', '0xFF')));
 
   LabelModel copyWith({String? namaLabel, String? kodeWarna}) => LabelModel(
-        id: id,
-        userId: userId,
-        namaLabel: namaLabel ?? this.namaLabel,
-        kodeWarna: kodeWarna ?? this.kodeWarna,
-      );
+    id: id,
+    userId: userId,
+    namaLabel: namaLabel ?? this.namaLabel,
+    kodeWarna: kodeWarna ?? this.kodeWarna,
+  );
 
   factory LabelModel.fromJson(Map<String, dynamic> json) => LabelModel(
-        id: json['id'],
-        userId: json['user_id'],
-        namaLabel: json['nama_label'],
-        kodeWarna: json['kode_warna'],
-      );
+    id: json['id'],
+    userId: json['user_id'],
+    namaLabel: json['nama_label'],
+    kodeWarna: json['kode_warna'],
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'user_id': userId,
-        'nama_label': namaLabel,
-        'kode_warna': kodeWarna,
-      };
+    'id': id,
+    'user_id': userId,
+    'nama_label': namaLabel,
+    'kode_warna': kodeWarna,
+  };
 }

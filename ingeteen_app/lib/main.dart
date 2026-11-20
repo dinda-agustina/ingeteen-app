@@ -4,10 +4,12 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/task_provider.dart';
 import 'providers/label_provider.dart';
-import 'utils/app_routes.dart';
-import 'utils/app_theme.dart';
+import 'core/routes/app_routes.dart';
+import 'core/theme/app_theme.dart';
 
-void main() => runApp(const IngeTeenApp());
+void main() {
+  runApp(const IngeTeenApp());
+}
 
 class IngeTeenApp extends StatelessWidget {
   const IngeTeenApp({super.key});
@@ -16,16 +18,8 @@ class IngeTeenApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => TaskProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => LabelProvider(),
-        ),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
         ChangeNotifierProvider(create: (_) => LabelProvider()),
       ],
       child: MaterialApp(

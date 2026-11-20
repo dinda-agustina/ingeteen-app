@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/label_provider.dart';
 
 class CreateLabelScreen extends StatefulWidget {
   final int userId;
 
-  const CreateLabelScreen({
-    super.key,
-    required this.userId,
-  });
+  const CreateLabelScreen({super.key, required this.userId});
 
   @override
   State<CreateLabelScreen> createState() => _CreateLabelScreenState();
@@ -43,12 +41,7 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
   Color _parseColor(String hex) {
     final value = hex.replaceFirst('#', '');
 
-    return Color(
-      int.parse(
-        value.length == 6 ? 'FF$value' : value,
-        radix: 16,
-      ),
-    );
+    return Color(int.parse(value.length == 6 ? 'FF$value' : value, radix: 16));
   }
 
   // Proses menyimpan label.
@@ -76,11 +69,11 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
     bool success = false;
 
     try {
-      success = context.read<LabelProvider>().addLabel(
-            userId: widget.userId,
-            labelName: _nameController.text.trim(),
-            colorCode: _selectedColor,
-          );
+      success = await context.read<LabelProvider>().addLabel(
+        userId: widget.userId,
+        labelName: _nameController.text.trim(),
+        colorCode: _selectedColor,
+      );
     } catch (_) {
       success = false;
     }
@@ -133,10 +126,7 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Color(0xFF26364A),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF26364A)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -167,10 +157,7 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
                 const SizedBox(height: 6),
                 const Text(
                   'Group notes and tasks for easy access.',
-                  style: TextStyle(
-                    color: Color(0xFF8A8A8A),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Color(0xFF8A8A8A), fontSize: 12),
                 ),
 
                 const SizedBox(height: 24),
@@ -206,15 +193,11 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(9),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFEAE7E0),
-                      ),
+                      borderSide: const BorderSide(color: Color(0xFFEAE7E0)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(9),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFFFA800),
-                      ),
+                      borderSide: const BorderSide(color: Color(0xFFFFA800)),
                     ),
                   ),
                   validator: (value) {
@@ -248,8 +231,7 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
                           ? null
                           : () {
                               setState(() {
-                                _selectedColor =
-                                    isSelected ? null : color;
+                                _selectedColor = isSelected ? null : color;
                               });
                             },
                       child: Container(
@@ -259,17 +241,12 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
                           color: _parseColor(color),
                           shape: BoxShape.circle,
                           border: isSelected
-                              ? Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                )
+                              ? Border.all(color: Colors.white, width: 2)
                               : null,
                           boxShadow: isSelected
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withValues(
-                                      alpha: 0.15,
-                                    ),
+                                    color: Colors.black.withValues(alpha: 0.15),
                                     blurRadius: 0,
                                     spreadRadius: 1,
                                   ),
@@ -327,8 +304,8 @@ class _CreateLabelScreenState extends State<CreateLabelScreen> {
                     onPressed: _isSaving ? null : _saveLabel,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFFA800),
-                      disabledBackgroundColor:
-                          const Color(0xFFFFA800).withValues(alpha: 0.6),
+                      disabledBackgroundColor: const Color(0xFFFFA800)
+                          .withValues(alpha: 0.6),
                       foregroundColor: const Color(0xFF26364A),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -364,14 +341,9 @@ class _SavingLabelDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFFFFFEFC),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 30,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -423,18 +395,13 @@ class _FailedLabelDialog extends StatelessWidget {
   final VoidCallback onTryAgain;
   final VoidCallback onDismiss;
 
-  const _FailedLabelDialog({
-    required this.onTryAgain,
-    required this.onDismiss,
-  });
+  const _FailedLabelDialog({required this.onTryAgain, required this.onDismiss});
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFFFFFEFC),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -489,10 +456,7 @@ class _FailedLabelDialog extends StatelessWidget {
                 ),
                 child: const Text(
                   'Try Again',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -504,19 +468,14 @@ class _FailedLabelDialog extends StatelessWidget {
                 onPressed: onDismiss,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF101C3C),
-                  side: const BorderSide(
-                    color: Color(0xFFE5DED2),
-                  ),
+                  side: const BorderSide(color: Color(0xFFE5DED2)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: const Text(
                   'Dismiss',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -538,9 +497,7 @@ class _SuccessLabelDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: const Color(0xFFFFFEFC),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -595,10 +552,7 @@ class _SuccessLabelDialog extends StatelessWidget {
                 ),
                 child: const Text(
                   'Done',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

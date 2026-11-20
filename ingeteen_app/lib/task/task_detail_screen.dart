@@ -3,50 +3,53 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/task_model.dart';
+import '../models/label_model.dart';
 import '../providers/task_provider.dart';
+import '../providers/label_provider.dart';
 import 'task_form_screen.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final TaskModel task;
 
-  const TaskDetailScreen({
-    super.key,
-    required this.task,
-  });
+  const TaskDetailScreen({super.key, required this.task});
 
   @override
-  State<TaskDetailScreen> createState() =>
-      _TaskDetailScreenState();
+  State<TaskDetailScreen> createState() => _TaskDetailScreenState();
 }
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
-  static const navy = Color(0xFF26364D);
-  static const cream = Color(0xFFF9F5E9);
-  static const orange = Color(0xFFFFB31A);
-  static const mutedText = Color(0xFF999999);
+  static const Color navy = Color(0xFF26364D);
+  static const Color cream = Color(0xFFF9F5E9);
+  static const Color orange = Color(0xFFFFB31A);
+  static const Color mutedText = Color(0xFF999999);
 
-  // Reminder settings for the current screen.
-  // These settings are temporary because TaskModel
-  // does not currently store reminder preferences.
+  // Reminder masih bersifat sementara.
   bool _reminderThreeDays = true;
   bool _reminderOneDay = true;
   bool _reminderDueDay = true;
 
+  bool _isDeleting = false;
+  bool _isUpdatingStatus = false;
+
+  // Warna status tugas.
   Color _priorityColor(TaskModel task) {
     if (task.isCompleted) {
-      return Colors.green.shade700;
+      return const Color(0xFF858585);
     }
 
     switch (task.deadlineLevel) {
       case DeadlineLevel.urgent:
         return Colors.red.shade600;
+
       case DeadlineLevel.near:
         return Colors.orange.shade700;
+
       case DeadlineLevel.safe:
         return Colors.green.shade700;
     }
   }
 
+  // Tulisan status tugas.
   String _priorityText(TaskModel task) {
     if (task.isCompleted) {
       return 'Completed';
@@ -55,93 +58,231 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     switch (task.deadlineLevel) {
       case DeadlineLevel.urgent:
         return 'Urgent';
+
       case DeadlineLevel.near:
-        return 'Pending • Tomorrow';
+        return 'Due Soon';
+
       case DeadlineLevel.safe:
-        return 'Pending';
+        return 'On Track';
     }
   }
 
+  // Membuka halaman edit tugas.
   Future<void> _editTask(TaskModel task) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => TaskFormScreen(task: task),
-      ),
+      MaterialPageRoute(builder: (_) => TaskFormScreen(task: task)),
     );
   }
 
-  Future<void> _deleteTask(TaskModel task) async {
-    final confirmed = await showDialog<bool>(
+  // Popup konfirmasi penghapusan.
+  Future<bool> _showDeleteConfirmation(TaskModel task) async {
+    final result = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
+        return Dialog(
+          backgroundColor: const Color(0xFFFFFCF5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text(
-            'Delete Task?',
-            style: TextStyle(
-              color: navy,
-              fontWeight: FontWeight.bold,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFFE9E9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.redAccent,
+                    size: 24,
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Delete Task?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 9),
+
+                Text(
+                  'Are you sure you want to delete '
+                  '"${task.judul}"?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: mutedText,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, false);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: navy,
+                            side: const BorderSide(color: Color(0xFFE5E0D5)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: SizedBox(
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: orange,
+                            foregroundColor: navy,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                          ),
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          content: Text(
-            'Are you sure you want to delete "${task.judul}"?',
-            style: const TextStyle(
-              color: mutedText,
-              fontSize: 13,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: mutedText),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                elevation: 0,
-              ),
-              child: const Text('Delete'),
-            ),
-          ],
         );
       },
     );
 
-    if (confirmed != true || !mounted) return;
-
-    context.read<TaskProvider>().deleteTask(task.id);
-
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Task deleted successfully.'),
-      ),
-    );
+    return result ?? false;
   }
 
-  void _toggleTaskStatus(TaskModel task) {
-    context.read<TaskProvider>().toggleTaskStatus(task.id);
+  // Menghapus tugas.
+  Future<void> _deleteTask(TaskModel task) async {
+    if (_isDeleting) return;
+
+    final confirmed = await _showDeleteConfirmation(task);
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      await context.read<TaskProvider>().deleteTask(task.id);
+
+      if (!mounted) return;
+
+      // Kembali ke Home dan kirim tanda bahwa task berhasil dihapus.
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete task. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    }
+  }
+
+  // Mengubah status tugas.
+  Future<void> _toggleTaskStatus(TaskModel task) async {
+    if (_isUpdatingStatus) return;
+
+    setState(() {
+      _isUpdatingStatus = true;
+    });
+
+    try {
+      await context.read<TaskProvider>().toggleTaskStatus(task.id);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update task status. Please try again.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatus = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final taskProvider = context.watch<TaskProvider>();
 
-    final currentTask = taskProvider.getTaskById(widget.task.id);
+    final currentTask = taskProvider.getTaskById(
+      widget.task.id,
+      userId: widget.task.userId,
+    );
+
+    // Cari label yang sedang digunakan tugas.
+    final userLabels = context.watch<LabelProvider>().getLabelsForUser(
+      widget.task.userId,
+    );
+
+    LabelModel? currentLabel;
+
+    for (final label in userLabels) {
+      if (label.id == currentTask?.labelId) {
+        currentLabel = label;
+        break;
+      }
+    }
 
     if (currentTask == null) {
       return Scaffold(
@@ -152,13 +293,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           elevation: 0,
         ),
         body: const Center(
-          child: Text(
-            'Task not found.',
-            style: TextStyle(color: navy),
-          ),
+          child: Text('Task not found.', style: TextStyle(color: navy)),
         ),
       );
     }
+
+    final priorityColor = _priorityColor(currentTask);
+
+    final labelColor = currentLabel?.color ?? LabelModel.defaultColor;
 
     return Scaffold(
       backgroundColor: cream,
@@ -166,6 +308,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         backgroundColor: cream,
         foregroundColor: navy,
         elevation: 0,
+        scrolledUnderElevation: 0,
         titleSpacing: 0,
         title: const Text(
           'Task Details',
@@ -179,48 +322,45 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           IconButton(
             tooltip: 'Edit Task',
             onPressed: () => _editTask(currentTask),
-            icon: const Icon(
-              Icons.edit_outlined,
-              size: 20,
-            ),
+            icon: const Icon(Icons.edit_outlined, size: 20),
           ),
+
           IconButton(
             tooltip: 'Delete Task',
-            onPressed: () => _deleteTask(currentTask),
+            onPressed: _isDeleting ? null : () => _deleteTask(currentTask),
             icon: const Icon(
               Icons.delete_outline,
               color: Colors.red,
               size: 20,
             ),
           ),
+
           const SizedBox(width: 6),
         ],
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Task information card.
+              // TASK INFORMATION CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(13),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(13),
-                  border: Border.all(
-                    color: currentTask.isCompleted
-                        ? Colors.green.shade500
-                        : Colors.red.shade400,
-                    width: 1,
-                  ),
+                  border: Border.all(color: priorityColor, width: 1.2),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // LABEL AND STATUS
                     Row(
                       children: [
+                        // LABEL DI SISI KIRI
                         Flexible(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -228,13 +368,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                               vertical: 5,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8F0FF),
+                              color: labelColor.withValues(alpha: 0.28),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               currentTask.labelName?.isNotEmpty == true
                                   ? currentTask.labelName!
                                   : 'No Label',
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: navy,
@@ -244,29 +385,27 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _priorityColor(currentTask)
-                                    .withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                _priorityText(currentTask),
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: _priorityColor(currentTask),
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+
+                        // MEMBERIKAN RUANG DI ANTARA KEDUANYA
+                        const Spacer(),
+
+                        // STATUS DI SISI KANAN
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: priorityColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            _priorityText(currentTask),
+                            maxLines: 1,
+                            style: TextStyle(
+                              color: priorityColor,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -275,6 +414,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
                     const SizedBox(height: 12),
 
+                    // TASK TITLE
                     Text(
                       currentTask.judul,
                       style: const TextStyle(
@@ -286,8 +426,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
                     const SizedBox(height: 7),
 
+                    // DESCRIPTION
                     Text(
-                      currentTask.deskripsi.isEmpty
+                      currentTask.deskripsi.trim().isEmpty
                           ? 'No description provided.'
                           : currentTask.deskripsi,
                       style: const TextStyle(
@@ -313,10 +454,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     Text(
                       DateFormat('d MMMM yyyy • HH:mm')
                           .format(currentTask.createdAt),
-                      style: const TextStyle(
-                        color: navy,
-                        fontSize: 10,
-                      ),
+                      style: const TextStyle(color: navy, fontSize: 10),
                     ),
 
                     const SizedBox(height: 9),
@@ -347,7 +485,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
               const SizedBox(height: 14),
 
-              // Reminder card.
+              // REMINDER CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(13),
@@ -371,7 +509,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
                     _buildReminder(
                       title: 'D-3',
-                      description: 'Remind me one day before',
+                      description: 'Remind me 3 days before',
                       value: _reminderThreeDays,
                       onChanged: (value) {
                         setState(() {
@@ -409,11 +547,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     const SizedBox(height: 8),
 
                     const Text(
-                      'Local reminders work even when the app is closed.',
-                      style: TextStyle(
-                        color: mutedText,
-                        fontSize: 8,
-                      ),
+                      'Reminder preferences are temporary and are not saved yet.',
+                      style: TextStyle(color: mutedText, fontSize: 8),
                     ),
                   ],
                 ),
@@ -421,14 +556,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
               const SizedBox(height: 14),
 
-              // Mark complete button.
+              // MARK COMPLETE BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 40,
                 child: ElevatedButton(
-                  onPressed: () {
-                    _toggleTaskStatus(currentTask);
-                  },
+                  onPressed: _isUpdatingStatus || _isDeleting
+                    ? null
+                    : () => _toggleTaskStatus(currentTask),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: orange,
                     foregroundColor: navy,
@@ -455,6 +590,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     );
   }
 
+  // REMINDER WIDGET
   Widget _buildReminder({
     required String title,
     required String description,
@@ -475,17 +611,17 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+
               const SizedBox(height: 3),
+
               Text(
                 description,
-                style: const TextStyle(
-                  color: mutedText,
-                  fontSize: 8,
-                ),
+                style: const TextStyle(color: mutedText, fontSize: 8),
               ),
             ],
           ),
         ),
+
         Transform.scale(
           scale: 0.78,
           child: Switch(
@@ -495,8 +631,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             activeTrackColor: navy,
             inactiveThumbColor: Colors.white,
             inactiveTrackColor: const Color(0xFFD5D5D5),
-            trackOutlineColor:
-                WidgetStateProperty.all(Colors.transparent),
+            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
           ),
         ),
       ],

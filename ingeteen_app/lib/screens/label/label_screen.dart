@@ -1,54 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 
-import '../../providers/auth_provider.dart';
-import '../../providers/label_provider.dart';
-import '../../services/dummy_data.dart';
 import '../../models/label_model.dart';
 import '../../models/task_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/label_provider.dart';
+import '../../providers/task_provider.dart';
+import '../../widgets/task_card.dart';
 import 'label_create_screen.dart';
 
-class LabelScreen extends StatefulWidget {
+class LabelScreen extends StatelessWidget {
   const LabelScreen({super.key});
 
-  @override
-  State<LabelScreen> createState() => _LabelScreenState();
-}
+  static const Color _background = Color(0xFFFAF8F1);
+  static const Color _navy = Color(0xFF101C3C);
+  static const Color _orange = Color(0xFFFFA800);
+  static const Color _grey = Color(0xFF8C8C8C);
 
-class _LabelScreenState extends State<LabelScreen> {
-  int _getTaskCount(int userId, int labelId) {
-    return DummyData.tasks.where((task) {
-      return task.userId == userId && task.labelId == labelId;
-    }).length;
+  // Menghitung jumlah tugas pada sebuah label.
+  int _getTaskCount(List<TaskModel> tasks, int labelId) {
+    return tasks.where((task) => task.labelId == labelId).length;
   }
 
-  Future<void> _openCreateLabelScreen(int userId) async {
-    final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => CreateLabelScreen(userId: userId)),
-    );
-
-    if (!mounted || result != true) return;
-  }
-
-  Future<void> _showEditLabelDialog(LabelModel label, int userId) async {
-    final result = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _EditLabelSheet(label: label, userId: userId),
-    );
-
-    if (!mounted || result != true) return;
-
+  // Popup berhasil atau gagal.
+  Future<void> _showStatusDialog(
+    BuildContext context, {
+    required String title,
+    required String message,
+    bool isSuccess = true,
+  }) async {
     await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: const Color(0xFFFFFEFC),
+          backgroundColor: const Color(0xFFFFFCF5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -56,50 +44,56 @@ class _LabelScreenState extends State<LabelScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE8F5EA),
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: isSuccess
+                        ? const Color(0xFFE6F4E9)
+                        : const Color(0xFFFFE9E9),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.check,
-                    color: Color(0xFF23823B),
-                    size: 25,
+                  child: Icon(
+                    isSuccess ? Icons.check_rounded : Icons.close_rounded,
+                    color: isSuccess
+                        ? const Color(0xFF4C9B63)
+                        : Colors.redAccent,
+                    size: 23,
                   ),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Label Edited',
-                  style: TextStyle(
+                const SizedBox(height: 14),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: _navy,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF101C3C),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Your label has been updated successfully.\n'
-                  "You're all set!",
+                const SizedBox(height: 9),
+                Text(
+                  message,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 10,
-                    height: 1.6,
-                    color: Color(0xFF777777),
+                  style: const TextStyle(
+                    color: Color(0xFF999999),
+                    fontSize: 11,
+                    height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 40,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pop(dialogContext),
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                    },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFA800),
-                      foregroundColor: const Color(0xFF101C3C),
+                      backgroundColor: _orange,
+                      foregroundColor: _navy,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(9),
                       ),
                     ),
                     child: const Text(
@@ -119,94 +113,110 @@ class _LabelScreenState extends State<LabelScreen> {
     );
   }
 
-  Future<void> _showDeleteLabelDialog(LabelModel label, int userId) async {
-    final confirmed = await showDialog<bool>(
+  // Popup konfirmasi hapus label.
+  Future<bool> _showDeleteConfirmation(
+    BuildContext context,
+    String labelName,
+  ) async {
+    final result = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
         return Dialog(
-          backgroundColor: const Color(0xFFFFFEFC),
+          backgroundColor: const Color(0xFFFFFCF5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 44,
                   height: 44,
                   decoration: const BoxDecoration(
-                    color: Color(0xFFFFF0F0),
+                    color: Color(0xFFFFE9E9),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.delete_outline,
-                    color: Color(0xFFFF4242),
+                    color: Colors.redAccent,
                     size: 23,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 const Text(
-                  'Delete label?',
+                  'Delete Label?',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 18,
+                    color: _navy,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF101C3C),
                   ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'This label will be removed from your labels. '
-                  'Existing tasks will remain saved.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.6,
-                    color: Color(0xFF526078),
+                const SizedBox(height: 9),
+                Text(
+                  'Are you sure you want to delete "$labelName"? '
+                  'Tasks using this label will remain saved, '
+                  'but will no longer have this label.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF777777),
+                    fontSize: 11,
+                    height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pop(dialogContext, false);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 46),
-                          foregroundColor: const Color(0xFF101C3C),
-                          side: const BorderSide(color: Color(0xFF101C3C)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        height: 40,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, false);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: _navy,
+                            side: const BorderSide(color: Color(0xFFE5E0D5)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(dialogContext, true);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 46),
-                          backgroundColor: const Color(0xFFFFF2F2),
-                          foregroundColor: const Color(0xFFD92828),
-                          elevation: 0,
-                          side: const BorderSide(color: Color(0xFFFF4242)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        height: 40,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _orange,
+                            foregroundColor: _navy,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9),
+                            ),
                           ),
-                        ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(fontWeight: FontWeight.w600),
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -219,170 +229,170 @@ class _LabelScreenState extends State<LabelScreen> {
       },
     );
 
-    if (!mounted || confirmed != true) return;
+    return result ?? false;
+  }
 
-    final success = context.read<LabelProvider>().deleteLabel(
+  // Membuka halaman tambah label.
+  Future<void> _openCreateLabelScreen(BuildContext context, int userId) async {
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => CreateLabelScreen(userId: userId)),
+    );
+  }
+
+  // Mengedit label dan menyinkronkan nama label pada tugas.
+  Future<void> _editLabel(
+    BuildContext context,
+    LabelModel label,
+    int userId,
+  ) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _EditLabelSheet(label: label, userId: userId),
+    );
+
+    if (!context.mounted || result != true) return;
+
+    final labelProvider = context.read<LabelProvider>();
+    final taskProvider = context.read<TaskProvider>();
+
+    final updatedLabels = labelProvider.getLabelsForUser(userId);
+
+    LabelModel updatedLabel = label;
+
+    for (final item in updatedLabels) {
+      if (item.id == label.id) {
+        updatedLabel = item;
+        break;
+      }
+    }
+
+    final relatedTasks = taskProvider.tasks.where((task) {
+      return task.userId == userId && task.labelId == label.id;
+    }).toList();
+
+    for (final task in relatedTasks) {
+      taskProvider.updateTask(
+        id: task.id,
+        labelId: updatedLabel.id,
+        labelName: updatedLabel.namaLabel,
+        judul: task.judul,
+        deskripsi: task.deskripsi,
+        deadline: task.deadline,
+        isCompleted: task.isCompleted,
+      );
+    }
+
+    if (!context.mounted) return;
+
+    await _showStatusDialog(
+      context,
+      title: 'Label updated!',
+      message: 'Your label has been updated successfully.',
+    );
+  }
+
+  // Menghapus label tanpa menghapus tugas.
+  Future<void> _deleteLabel(
+    BuildContext context,
+    LabelModel label,
+    int userId,
+  ) async {
+    final confirmed = await _showDeleteConfirmation(context, label.namaLabel);
+
+    if (!context.mounted || !confirmed) return;
+
+    final labelProvider = context.read<LabelProvider>();
+    final taskProvider = context.read<TaskProvider>();
+
+    // Simpan tugas yang menggunakan label sebelum label dihapus.
+    final relatedTasks = taskProvider.tasks.where((task) {
+      return task.userId == userId && task.labelId == label.id;
+    }).toList();
+
+    final success = await labelProvider.deleteLabel(
       userId: userId,
       labelId: label.id,
     );
 
-    if (!mounted) return;
-
     if (!success) {
-      ScaffoldMessenger.of(
+      if (!context.mounted) return;
+
+      await _showStatusDialog(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to delete label.')));
+        title: 'Unable to delete label',
+        message: 'Something went wrong. Please try again.',
+        isSuccess: false,
+      );
       return;
     }
 
-    await showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return Dialog(
-          backgroundColor: const Color(0xFFFFFEFC),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(22),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE8F5EA),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    color: Color(0xFF087B32),
-                    size: 29,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Label Deleted',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF101C3C),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'Your label has been successfully deleted.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12,
-                    height: 1.6,
-                    color: Color(0xFF555555),
-                  ),
-                ),
-                const SizedBox(height: 26),
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFA800),
-                      foregroundColor: const Color(0xFF101C3C),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+    // Lepaskan label dari tugas yang terkait.
+    for (final task in relatedTasks) {
+      taskProvider.updateTask(
+        id: task.id,
+        clearLabel: true,
+        judul: task.judul,
+        deskripsi: task.deskripsi,
+        deadline: task.deadline,
+        isCompleted: task.isCompleted,
+      );
+    }
 
-  void _openLabelDetail(LabelModel label, int userId) {
-    Navigator.push(
+    if (!context.mounted) return;
+
+    await _showStatusDialog(
       context,
-      MaterialPageRoute(
-        builder: (_) => LabelDetailScreen(label: label, userId: userId),
-      ),
+      title: 'Label deleted!',
+      message: 'Your label has been successfully deleted.',
     );
   }
 
-  Widget _buildAddLabelButton(int userId) {
-    return SizedBox(
-      width: double.infinity,
-      height: 46,
-      child: ElevatedButton.icon(
-        onPressed: () => _openCreateLabelScreen(userId),
-        icon: const Icon(Icons.add, size: 18),
-        label: const Text(
-          'Add Label',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFFA800),
-          foregroundColor: const Color(0xFF101C3C),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      ),
-    );
-  }
-
+  // Tampilan ketika belum ada label.
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 64,
-            height: 64,
+            width: 70,
+            height: 70,
             decoration: BoxDecoration(
               color: const Color(0xFFF1EEE4),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
-              Icons.label_outline,
-              size: 30,
-              color: Color(0xFF101C3C),
-            ),
+            child: const Icon(Icons.label_outline, size: 32, color: _navy),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           const Text(
             'No labels yet',
             style: TextStyle(
-              color: Color(0xFF101C3C),
-              fontSize: 13,
+              color: _navy,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Create labels to organize notes and tasks.',
+            'Create labels to organize your tasks.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Color(0xFF8C8C8C), fontSize: 10),
+            style: TextStyle(color: _grey, fontSize: 11),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLabelCard(LabelModel label, int userId) {
-    final taskCount = _getTaskCount(userId, label.id);
+  // Kartu label.
+  Widget _buildLabelCard(
+    BuildContext context,
+    LabelModel label,
+    int userId,
+    List<TaskModel> userTasks,
+  ) {
+    final taskCount = _getTaskCount(userTasks, label.id);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -392,7 +402,14 @@ class _LabelScreenState extends State<LabelScreen> {
         border: Border.all(color: const Color(0xFFEAE7E2)),
       ),
       child: ListTile(
-        onTap: () => _openLabelDetail(label, userId),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => LabelDetailScreen(label: label, userId: userId),
+            ),
+          );
+        },
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: Container(
           width: 42,
@@ -421,9 +438,9 @@ class _LabelScreenState extends State<LabelScreen> {
           icon: const Icon(Icons.more_vert, color: Color(0xFF99918B)),
           onSelected: (value) {
             if (value == 'edit') {
-              _showEditLabelDialog(label, userId);
+              _editLabel(context, label, userId);
             } else if (value == 'delete') {
-              _showDeleteLabelDialog(label, userId);
+              _deleteLabel(context, label, userId);
             }
           },
           itemBuilder: (_) => [
@@ -456,19 +473,24 @@ class _LabelScreenState extends State<LabelScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
-    final labelProvider = context.watch<LabelProvider>();
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text('Please log in first.')));
     }
 
+    final labelProvider = context.watch<LabelProvider>();
+    final taskProvider = context.watch<TaskProvider>();
+
     final userLabels = labelProvider.getLabelsForUser(user.id);
-    final hasLabels = userLabels.isNotEmpty;
+
+    final userTasks = taskProvider.tasks.where((task) {
+      return task.userId == user.id;
+    }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F1),
+      backgroundColor: _background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFAF8F1),
+        backgroundColor: _background,
         elevation: 0,
         title: const Text(
           'Label',
@@ -498,24 +520,51 @@ class _LabelScreenState extends State<LabelScreen> {
                 'Create and organize your tasks.',
                 style: TextStyle(fontSize: 14, color: Color(0xFF99918B)),
               ),
-              if (hasLabels) ...[
-                const SizedBox(height: 24),
-                _buildAddLabelButton(user.id),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: userLabels.length,
-                    itemBuilder: (context, index) {
-                      return _buildLabelCard(userLabels[index], user.id);
-                    },
+              const SizedBox(height: 24),
+
+              // ADD LABEL BUTTON
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _openCreateLabelScreen(context, user.id);
+                  },
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text(
+                    'Add Label',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _orange,
+                    foregroundColor: _navy,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
-              ] else ...[
-                Expanded(child: _buildEmptyState()),
-                const SizedBox(height: 12),
-                _buildAddLabelButton(user.id),
-              ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // LABEL LIST
+              Expanded(
+                child: userLabels.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: userLabels.length,
+                        itemBuilder: (context, index) {
+                          return _buildLabelCard(
+                            context,
+                            userLabels[index],
+                            user.id,
+                            userTasks,
+                          );
+                        },
+                      ),
+              ),
             ],
           ),
         ),
@@ -550,64 +599,19 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
 
   int _selectedTab = 0;
 
-  late List<TaskModel> _tasks;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _tasks = DummyData.tasks
-        .where(
-          (task) =>
-              task.userId == widget.userId && task.labelId == widget.label.id,
-        )
-        .toList();
+  // Mengambil tugas berdasarkan label dan status.
+  List<TaskModel> _getVisibleTasks(List<TaskModel> allTasks) {
+    return allTasks.where((task) {
+      return task.isCompleted == (_selectedTab == 1);
+    }).toList()..sort((a, b) => a.deadline.compareTo(b.deadline));
   }
 
-  List<TaskModel> get _pendingTasks {
-    return _tasks.where((task) => !task.isCompleted).toList();
+  // Mengubah status tugas.
+  void _toggleTask(TaskModel task) {
+    context.read<TaskProvider>().toggleTaskStatus(task.id);
   }
 
-  List<TaskModel> get _completedTasks {
-    return _tasks.where((task) => task.isCompleted).toList();
-  }
-
-  List<TaskModel> get _visibleTasks {
-    return _selectedTab == 0 ? _pendingTasks : _completedTasks;
-  }
-
-  void _toggleTask(TaskModel task, bool? value) {
-    setState(() {
-      final index = _tasks.indexWhere((item) => item.id == task.id);
-
-      if (index == -1) return;
-
-      _tasks[index] = task.copyWith(isCompleted: value ?? false);
-    });
-  }
-
-  Color _deadlineColor(TaskModel task) {
-    switch (task.deadlineLevel) {
-      case DeadlineLevel.urgent:
-        return const Color(0xFFFFA800);
-      case DeadlineLevel.near:
-        return const Color(0xFF4EDB55);
-      case DeadlineLevel.safe:
-        return const Color(0xFF80AFFF);
-    }
-  }
-
-  String _deadlineText(TaskModel task) {
-    switch (task.deadlineLevel) {
-      case DeadlineLevel.urgent:
-        return 'Due soon';
-      case DeadlineLevel.near:
-        return 'On track';
-      case DeadlineLevel.safe:
-        return 'On track';
-    }
-  }
-
+  // Tab Pending dan Completed.
   Widget _buildTab(String title, int index) {
     final isSelected = _selectedTab == index;
 
@@ -639,130 +643,25 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
     );
   }
 
-  Widget _buildTaskCard(TaskModel task) {
-    final completed = task.isCompleted;
-    final borderColor = completed
-        ? const Color(0xFFE5E1D7)
-        : _deadlineColor(task);
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: borderColor, width: completed ? 1 : 1.3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 7,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  task.judul,
-                  style: TextStyle(
-                    color: _navy,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    decoration: completed ? TextDecoration.lineThrough : null,
-                    decorationColor: _navy,
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 25,
-                height: 25,
-                child: Checkbox(
-                  value: completed,
-                  onChanged: (value) => _toggleTask(task, value),
-                  activeColor: const Color(0xFF52677F),
-                  checkColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFF52677F), width: 1.3),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ),
-            ],
-          ),
-          if (task.deskripsi.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              task.deskripsi,
-              style: TextStyle(
-                color: completed ? _grey : const Color(0xFF777777),
-                fontSize: 9,
-                decoration: completed ? TextDecoration.lineThrough : null,
-              ),
-            ),
-          ],
-          const SizedBox(height: 9),
-          Text(
-            completed ? 'Completed' : _deadlineText(task),
-            style: TextStyle(
-              color: completed
-                  ? const Color(0xFF52677F)
-                  : task.deadlineLevel == DeadlineLevel.urgent
-                  ? const Color(0xFF9A6500)
-                  : const Color(0xFF238A37),
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 7),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-            decoration: BoxDecoration(
-              color: widget.label.color.withValues(alpha: 0.28),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              widget.label.namaLabel,
-              style: const TextStyle(
-                color: _navy,
-                fontSize: 9,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const SizedBox(height: 7),
-          Row(
-            children: [
-              const Icon(Icons.calendar_today_outlined, size: 10, color: _grey),
-              const SizedBox(width: 5),
-              Text(
-                DateFormat('d MMM yyyy • HH:mm', 'en_US').format(task.deadline),
-                style: const TextStyle(color: _grey, fontSize: 9),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final tasks = _visibleTasks;
+    // Selalu membaca data terbaru dari TaskProvider.
+    final allTasks = context.watch<TaskProvider>().tasks.where((task) {
+      return task.userId == widget.userId && task.labelId == widget.label.id;
+    }).toList();
+
+    final visibleTasks = _getVisibleTasks(allTasks);
 
     return Scaffold(
       backgroundColor: _background,
       appBar: AppBar(
         backgroundColor: _background,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
           icon: const Icon(Icons.arrow_back, color: _navy, size: 21),
         ),
         title: Text(
@@ -787,12 +686,17 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+
             const SizedBox(height: 5),
+
             Text(
-              '${_tasks.length} tasks',
+              '${allTasks.length} tasks',
               style: const TextStyle(color: _grey, fontSize: 9),
             ),
+
             const SizedBox(height: 14),
+
+            // PENDING AND COMPLETED TABS
             Container(
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
@@ -803,9 +707,12 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                 children: [_buildTab('PENDING', 0), _buildTab('COMPLETED', 1)],
               ),
             ),
+
             const SizedBox(height: 12),
+
+            // TASK LIST
             Expanded(
-              child: tasks.isEmpty
+              child: visibleTasks.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -829,7 +736,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                                 ? 'No pending tasks'
                                 : 'No completed tasks',
                             style: const TextStyle(
-                              color: Color(0xFF26364D),
+                              color: _navy,
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                             ),
@@ -847,9 +754,19 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                     )
                   : ListView.builder(
                       padding: EdgeInsets.zero,
-                      itemCount: tasks.length,
+                      itemCount: visibleTasks.length,
                       itemBuilder: (context, index) {
-                        return _buildTaskCard(tasks[index]);
+                        final task = visibleTasks[index];
+
+                        // Gunakan TaskCard yang sama dengan Home.
+                        return TaskCard(
+                          task: task,
+                          labelName: widget.label.namaLabel,
+                          labelColor: widget.label.color,
+                          onChanged: () {
+                            _toggleTask(task);
+                          },
+                        );
                       },
                     ),
             ),
@@ -876,11 +793,11 @@ class _EditLabelSheet extends StatefulWidget {
 
 class _EditLabelSheetState extends State<_EditLabelSheet> {
   final _formKey = GlobalKey<FormState>();
+
   late final TextEditingController _nameController;
 
   static const Color _navy = Color(0xFF101C3C);
   static const Color _orange = Color(0xFFFFA800);
-  static const Color _cream = Color(0xFFFFFEFC);
 
   static const List<String> _colors = [
     '#80AFFF',
@@ -896,6 +813,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
   ];
 
   String? _selectedColor;
+  String? _errorMessage;
   bool _isSaving = false;
 
   @override
@@ -904,9 +822,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
 
     _nameController = TextEditingController(text: widget.label.namaLabel);
 
-    _selectedColor = _colors.contains(widget.label.kodeWarna)
-        ? widget.label.kodeWarna
-        : null;
+    _selectedColor = widget.label.kodeWarna;
   }
 
   @override
@@ -915,126 +831,93 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
     super.dispose();
   }
 
+  // Mengubah kode warna menjadi Color.
   Color _parseColor(String hex) {
     final value = hex.replaceFirst('#', '');
+    final normalized = value.length == 6 ? 'FF$value' : value;
 
-    return Color(int.parse(value.length == 6 ? 'FF$value' : value, radix: 16));
+    return Color(int.parse(normalized, radix: 16));
   }
 
+  // Menyimpan perubahan label.
   Future<void> _saveLabel() async {
-    if (!_formKey.currentState!.validate() || _isSaving) {
+    if (_isSaving || !_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
       _isSaving = true;
+      _errorMessage = null;
     });
-
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const _SavingLabelDialog(),
-    );
-
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    if (!mounted) return;
 
     bool success = false;
 
     try {
-      success = context.read<LabelProvider>().updateLabel(
+      success = await context.read<LabelProvider>().updateLabel(
         userId: widget.userId,
         labelId: widget.label.id,
         labelName: _nameController.text.trim(),
         colorCode: _selectedColor,
         clearColor: _selectedColor == null,
       );
-    } catch (_) {
+    } catch (error) {
       success = false;
     }
 
     if (!mounted) return;
 
-    Navigator.of(context, rootNavigator: true).pop();
-
-    setState(() {
-      _isSaving = false;
-    });
-
     if (success) {
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Failed to update label. Make sure the label name is not already in use.',
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      setState(() {
+        _isSaving = false;
+        _errorMessage =
+            'Label name is already used or failed to update. Please try again.';
+      });
     }
   }
 
+  // Pilihan warna.
   Widget _buildColorOption(String color) {
     final isSelected = _selectedColor == color;
 
-    return SizedBox(
-      width: 48,
-      height: 48,
-      child: Center(
-        child: GestureDetector(
-          onTap: _isSaving
-              ? null
-              : () {
-                  setState(() {
-                    _selectedColor = isSelected ? null : color;
-                  });
-                },
-          child: Container(
-            width: isSelected ? 38 : 28,
-            height: isSelected ? 38 : 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: isSelected
-                  ? Border.all(color: _orange, width: 1.5)
-                  : null,
-            ),
-            child: Center(
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: _parseColor(color),
-                  shape: BoxShape.circle,
-                  border: isSelected
-                      ? Border.all(color: Colors.white, width: 1.5)
-                      : null,
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check, color: Colors.white, size: 19)
-                    : null,
-              ),
-            ),
-          ),
+    return InkWell(
+      onTap: _isSaving
+          ? null
+          : () {
+              setState(() {
+                _selectedColor = isSelected ? null : color;
+              });
+            },
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: _parseColor(color),
+          shape: BoxShape.circle,
+          border: isSelected
+              ? Border.all(color: _navy, width: 3)
+              : Border.all(color: Colors.black12),
         ),
+        child: isSelected
+            ? const Icon(Icons.check, color: Colors.white, size: 19)
+            : null,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.sizeOf(context).height;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
-        height: screenHeight * 0.65,
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
         decoration: const BoxDecoration(
-          color: _cream,
+          color: Color(0xFFFFFEFC),
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
@@ -1042,8 +925,10 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
           child: Form(
             key: _formKey,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // HANDLE
                 Center(
                   child: Container(
                     width: 32,
@@ -1054,7 +939,10 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+
+                const SizedBox(height: 18),
+
+                // HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1070,27 +958,28 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                       onPressed: _isSaving
                           ? null
                           : () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: _navy, size: 21),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.close, color: _navy),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 16),
+
                 const Text(
                   'Label name',
                   style: TextStyle(
                     color: _navy,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+
                 const SizedBox(height: 8),
+
                 TextFormField(
                   controller: _nameController,
                   enabled: !_isSaving,
                   textCapitalization: TextCapitalization.words,
-                  style: const TextStyle(color: _navy, fontSize: 12),
                   decoration: InputDecoration(
                     hintText: 'Label name',
                     hintStyle: const TextStyle(
@@ -1102,14 +991,6 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 12,
-                    ),
-                    suffixIcon: IconButton(
-                      onPressed: _isSaving ? null : _nameController.clear,
-                      icon: const Icon(
-                        Icons.cancel_outlined,
-                        size: 16,
-                        color: Color(0xFF777777),
-                      ),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -1127,6 +1008,7 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                       borderRadius: BorderRadius.circular(10),
                       borderSide: const BorderSide(color: Colors.redAccent),
                     ),
+                    errorText: _errorMessage,
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -1134,26 +1016,40 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                     }
                     return null;
                   },
+                  onChanged: (_) {
+                    if (_errorMessage != null) {
+                      setState(() {
+                        _errorMessage = null;
+                      });
+                    }
+                  },
                 ),
+
                 const SizedBox(height: 20),
+
                 const Text(
                   'Label color',
                   style: TextStyle(
                     color: _navy,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
                 Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                  spacing: 12,
+                  runSpacing: 12,
                   children: _colors.map(_buildColorOption).toList(),
                 ),
-                const Spacer(),
+
+                const SizedBox(height: 24),
+
+                // SAVE BUTTON
                 SizedBox(
                   width: double.infinity,
-                  height: 38,
+                  height: 44,
                   child: ElevatedButton(
                     onPressed: _isSaving ? null : _saveLabel,
                     style: ElevatedButton.styleFrom(
@@ -1165,75 +1061,24 @@ class _EditLabelSheetState extends State<_EditLabelSheet> {
                         borderRadius: BorderRadius.circular(11),
                       ),
                     ),
-                    child: const Text(
-                      'Save',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Save',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ======================================================
-// SAVING LABEL DIALOG
-// ======================================================
-
-class _SavingLabelDialog extends StatelessWidget {
-  const _SavingLabelDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: const Color(0xFFFFFEFC),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              padding: const EdgeInsets.all(11),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFFF1DF),
-                shape: BoxShape.circle,
-              ),
-              child: const CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: Color(0xFFFF941A),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Saving label...',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF101C3C),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Please wait while we save your label.\n'
-              'This will only take a moment.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10,
-                height: 1.6,
-                color: Color(0xFF777777),
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -1,24 +1,70 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/task_model.dart';
+import '../services/task_service.dart';
 
 class TaskProvider extends ChangeNotifier {
-  // The application starts with an empty task list.
+  final TaskService _taskService;
+
   final List<TaskModel> _tasks = [];
 
-  // Get all tasks.
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  TaskProvider({TaskService? taskService})
+      : _taskService = taskService ?? TaskService();
+
+  // =========================
+  // STATE
+  // =========================
+
   List<TaskModel> get tasks => List.unmodifiable(_tasks);
 
-  // Get pending tasks.
-  List<TaskModel> get pendingTasks =>
-      _tasks.where((task) => !task.isCompleted).toList();
+  bool get isLoading => _isLoading;
 
-  // Get completed tasks.
-  List<TaskModel> get completedTasks =>
-      _tasks.where((task) => task.isCompleted).toList();
+  String? get errorMessage => _errorMessage;
 
-  // Add a new task.
-  void addTask({
+  List<TaskModel> get pendingTasks {
+    return _tasks.where((task) => !task.isCompleted).toList();
+  }
+
+  List<TaskModel> get completedTasks {
+    return _tasks.where((task) => task.isCompleted).toList();
+  }
+
+  // =========================
+  // LOAD TASK
+  // =========================
+
+  Future<void> loadTasks() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _taskService.getTasks();
+
+      _tasks
+        ..clear()
+        ..addAll(result);
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Refresh task.
+  Future<void> refreshTasks() async {
+    await loadTasks();
+  }
+
+  // =========================
+  // CREATE TASK
+  // =========================
+
+  Future<void> addTask({
     required int userId,
     String? labelName,
     int? labelId,
@@ -26,37 +72,32 @@ class TaskProvider extends ChangeNotifier {
     required String deskripsi,
     required DateTime deadline,
     bool isCompleted = false,
-  }) {
-    final now = DateTime.now();
+  }) async {
+    try {
+      final newTask = await _taskService.createTask(
+        judul: judul,
+        deskripsi: deskripsi,
+        deadline: deadline,
+        labelId: labelId,
+        isCompleted: isCompleted,
+      );
 
-    final newId = _tasks.isEmpty
-        ? 1
-        : _tasks
-                .map((task) => task.id)
-                .reduce((a, b) => a > b ? a : b) +
-            1;
+      _tasks.add(newTask);
 
-    final newTask = TaskModel(
-      id: newId,
-      userId: userId,
-      labelId: labelId,
-      labelName: _normalizeLabel(labelName),
-      judul: judul.trim(),
-      deskripsi: deskripsi.trim(),
-      deadline: deadline,
-      isCompleted: isCompleted,
-      createdAt: now,
-      updatedAt: now,
-    );
-
-    _tasks.add(newTask);
-
-    notifyListeners();
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    }
   }
 
-  // Update an existing task.
-  void updateTask({
+  // =========================
+  // UPDATE TASK
+  // =========================
+
+  Future<void> updateTask({
     required int id,
+    int? userId,
     String? labelName,
     int? labelId,
     bool clearLabel = false,
@@ -64,68 +105,156 @@ class TaskProvider extends ChangeNotifier {
     required String deskripsi,
     required DateTime deadline,
     bool? isCompleted,
-  }) {
-    final index = _tasks.indexWhere(
-      (task) => task.id == id,
-    );
+  }) async {
+    final existingTask = getTaskById(id, userId: userId);
 
-    if (index == -1) return;
+    if (existingTask == null) return;
 
-    _tasks[index] = _tasks[index].copyWith(
-      labelName: _normalizeLabel(labelName),
-      labelId: labelId,
-      clearLabel: clearLabel,
-      judul: judul.trim(),
-      deskripsi: deskripsi.trim(),
-      deadline: deadline,
-      isCompleted: isCompleted,
-    );
+    try {
+      final updatedTask = await _taskService.updateTask(
+        id: id,
+        judul: judul,
+        deskripsi: deskripsi,
+        deadline: deadline,
+        labelId: clearLabel ? null : labelId,
+        isCompleted: isCompleted ?? existingTask.isCompleted,
+      );
 
-    notifyListeners();
-  }
+      final index = _tasks.indexWhere((task) => task.id == id);
 
-  // Delete a task.
-  void deleteTask(int id) {
-    final initialLength = _tasks.length;
-
-    _tasks.removeWhere(
-      (task) => task.id == id,
-    );
-
-    if (_tasks.length != initialLength) {
-      notifyListeners();
+      if (index != -1) {
+        _tasks[index] = updatedTask;
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
     }
   }
 
-  // Change task completion status.
-  void toggleTaskStatus(int id) {
-    final index = _tasks.indexWhere(
-      (task) => task.id == id,
-    );
+  // =========================
+  // DELETE TASK
+  // =========================
 
-    if (index == -1) return;
+  Future<void> deleteTask(int id, {int? userId}) async {
+    final existingTask = getTaskById(id, userId: userId);
 
-    final task = _tasks[index];
+    if (existingTask == null) return;
 
-    _tasks[index] = task.copyWith(
-      isCompleted: !task.isCompleted,
-    );
+    try {
+      await _taskService.deleteTask(id);
 
-    notifyListeners();
+      _tasks.removeWhere(
+        (task) => task.id == id,
+      );
+
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    }
   }
 
-  // Find a task by ID.
-  TaskModel? getTaskById(int id) {
+  // =========================
+  // TOGGLE STATUS
+  // =========================
+
+  Future<void> toggleTaskStatus(int id, {int? userId}) async {
+    final existingTask = getTaskById(id, userId: userId);
+
+    if (existingTask == null) return;
+
+    try {
+      final updatedTask = await _taskService.updateTaskStatus(
+        id: id,
+        isCompleted: !existingTask.isCompleted,
+      );
+
+      final index = _tasks.indexWhere(
+        (task) => task.id == id,
+      );
+
+      if (index != -1) {
+        _tasks[index] = updatedTask;
+        notifyListeners();
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    }
+  }
+
+  // =========================
+  // GET TASK
+  // =========================
+
+  TaskModel? getTaskById(int id, {int? userId}) {
     try {
       return _tasks.firstWhere(
-        (task) => task.id == id,
+        (task) =>
+            task.id == id &&
+            (userId == null || task.userId == userId),
       );
     } catch (_) {
       return null;
     }
   }
 
-  // Search tasks by title, description, or label.
+  // =========================
+  // LABEL HELPER
+  // =========================
+
+  void renameLabel({
+    required int userId,
+    required int labelId,
+    required String labelName,
+  }) {
+    bool changed = false;
+
+    for (int i = 0; i < _tasks.length; i++) {
+      final task = _tasks[i];
+
+      if (task.userId == userId && task.labelId == labelId) {
+        _tasks[i] = task.copyWith(
+          labelName: labelName,
+        );
+
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  void removeLabelFromTasks({
+    required int userId,
+    required int labelId,
+  }) {
+    bool changed = false;
+
+    for (int i = 0; i < _tasks.length; i++) {
+      final task = _tasks[i];
+
+      if (task.userId == userId && task.labelId == labelId) {
+        _tasks[i] = task.copyWith(
+          clearLabel: true,
+        );
+
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      notifyListeners();
+    }
+  }
+
+  // =========================
+  // SEARCH
+  // =========================
+
   List<TaskModel> searchTasks(String query) {
     final keyword = query.trim().toLowerCase();
 
@@ -140,14 +269,13 @@ class TaskProvider extends ChangeNotifier {
     }).toList();
   }
 
-  // Normalize label values.
-  String? _normalizeLabel(String? value) {
-    final label = value?.trim();
+  // =========================
+  // CLEAR DATA
+  // =========================
 
-    if (label == null || label.isEmpty) {
-      return null;
-    }
-
-    return label;
+  void clearTasks() {
+    _tasks.clear();
+    _errorMessage = null;
+    notifyListeners();
   }
 }

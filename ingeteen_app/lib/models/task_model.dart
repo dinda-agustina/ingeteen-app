@@ -68,8 +68,7 @@ class TaskModel {
       judul: json['judul'],
       deskripsi: json['deskripsi'] ?? '',
       deadline: DateTime.parse(json['deadline']),
-      isCompleted: json['is_completed'] == true ||
-          json['is_completed'] == 1,
+      isCompleted: json['is_completed'] == true || json['is_completed'] == 1,
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );

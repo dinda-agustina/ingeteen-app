@@ -29,16 +29,14 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
 
   List<TaskModel> get _allTasks {
     return DummyData.tasks.where((task) {
-      return task.userId == widget.userId &&
-          task.labelId == widget.label.id;
+      return task.userId == widget.userId && task.labelId == widget.label.id;
     }).toList();
   }
 
   List<TaskModel> get _filteredTasks {
     return _allTasks.where((task) {
       return task.isCompleted == _showCompleted;
-    }).toList()
-      ..sort((a, b) => a.deadline.compareTo(b.deadline));
+    }).toList()..sort((a, b) => a.deadline.compareTo(b.deadline));
   }
 
   void _toggleTask(TaskModel task, bool completed) {
@@ -49,9 +47,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
     if (index == -1) return;
 
     setState(() {
-      DummyData.tasks[index] = task.copyWith(
-        isCompleted: completed,
-      );
+      DummyData.tasks[index] = task.copyWith(isCompleted: completed);
     });
   }
 
@@ -98,17 +94,14 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: isSelected
-                ? Border.all(color: _orange, width: 1)
-                : null,
+            border: isSelected ? Border.all(color: _orange, width: 1) : null,
           ),
           child: Text(
             title,
             style: TextStyle(
               color: _navy,
               fontSize: 10,
-              fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ),
@@ -127,9 +120,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(13),
         border: Border.all(
-          color: completed
-              ? const Color(0xFFE6E1D8)
-              : statusColor,
+          color: completed ? const Color(0xFFE6E1D8) : statusColor,
           width: completed ? 1 : 1.2,
         ),
         boxShadow: [
@@ -153,8 +144,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                     color: _navy,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    decoration:
-                        completed ? TextDecoration.lineThrough : null,
+                    decoration: completed ? TextDecoration.lineThrough : null,
                     decorationColor: _grey,
                   ),
                 ),
@@ -175,11 +165,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                     ),
                   ),
                   child: completed
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 13,
-                        )
+                      ? const Icon(Icons.check, color: Colors.white, size: 13)
                       : null,
                 ),
               ),
@@ -195,8 +181,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                 color: _grey,
                 fontSize: 9,
                 height: 1.4,
-                decoration:
-                    completed ? TextDecoration.lineThrough : null,
+                decoration: completed ? TextDecoration.lineThrough : null,
                 decorationColor: _grey,
               ),
             ),
@@ -206,10 +191,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
           if (completed)
             const Text(
               'G�� Completed',
-              style: TextStyle(
-                color: Color(0xFF52647C),
-                fontSize: 9,
-              ),
+              style: TextStyle(color: Color(0xFF52647C), fontSize: 9),
             )
           else
             Text(
@@ -226,10 +208,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
           const SizedBox(height: 8),
 
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 9,
-              vertical: 5,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
             decoration: BoxDecoration(
               color: widget.label.color.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(20),
@@ -248,18 +227,11 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
 
           Row(
             children: [
-              const Icon(
-                Icons.calendar_today_outlined,
-                size: 10,
-                color: _grey,
-              ),
+              const Icon(Icons.calendar_today_outlined, size: 10, color: _grey),
               const SizedBox(width: 5),
               Text(
                 _formatDeadline(task.deadline),
-                style: const TextStyle(
-                  color: _grey,
-                  fontSize: 9,
-                ),
+                style: const TextStyle(color: _grey, fontSize: 9),
               ),
             ],
           ),
@@ -281,11 +253,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: _navy,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back, color: _navy, size: 20),
         ),
         title: Text(
           widget.label.namaLabel,
@@ -314,10 +282,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
 
             Text(
               '0 notes G�� $totalTasks tasks',
-              style: const TextStyle(
-                color: _grey,
-                fontSize: 9,
-              ),
+              style: const TextStyle(color: _grey, fontSize: 9),
             ),
 
             const SizedBox(height: 12),
@@ -345,10 +310,7 @@ class _LabelDetailScreenState extends State<LabelDetailScreen> {
                         _showCompleted
                             ? 'Belum ada tugas yang selesai.'
                             : 'Tidak ada tugas yang pending.',
-                        style: const TextStyle(
-                          color: _grey,
-                          fontSize: 12,
-                        ),
+                        style: const TextStyle(color: _grey, fontSize: 12),
                       ),
                     )
                   : ListView.builder(

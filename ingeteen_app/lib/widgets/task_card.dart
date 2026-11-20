@@ -6,6 +6,7 @@ import '../models/task_model.dart';
 class TaskCard extends StatelessWidget {
   final TaskModel task;
   final String labelName;
+  final Color labelColor;
   final VoidCallback onChanged;
   final VoidCallback? onTap;
 
@@ -13,6 +14,7 @@ class TaskCard extends StatelessWidget {
     super.key,
     required this.task,
     required this.labelName,
+    this.labelColor = const Color(0xFFE3DDD0),
     required this.onChanged,
     this.onTap,
   });
@@ -62,24 +64,94 @@ class TaskCard extends StatelessWidget {
     }
   }
 
+  Widget _buildCheckbox() {
+    return SizedBox(
+      width: 30,
+      height: 30,
+      child: Checkbox(
+        value: task.isCompleted,
+        onChanged: (_) => onChanged(),
+        activeColor: const Color(0xFF858585),
+        checkColor: Colors.white,
+        side: const BorderSide(color: Color(0xFF8793A3), width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+
+  Widget _buildLabelAndDeadline(String deadlineText, bool completed) {
+    final trimmedLabel = labelName.trim();
+
+    return Row(
+      children: [
+        if (trimmedLabel.isNotEmpty) ...[
+          Flexible(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 115),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: labelColor.withValues(alpha: 0.28),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                trimmedLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: navy,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        Expanded(
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 11,
+                color: completed
+                    ? const Color(0xFF858585)
+                    : const Color(0xFF777777),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  deadlineText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: completed
+                        ? const Color(0xFF858585)
+                        : const Color(0xFF777777),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final completed = task.isCompleted;
 
-    final deadlineText =
-        DateFormat('dd MMM yyyy, HH:mm').format(task.deadline);
+    final deadlineText = DateFormat('dd MMM yyyy, HH:mm').format(task.deadline);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: completed
-            ? const Color(0xFFE5E5E5)
-            : Colors.white,
+        color: completed ? const Color(0xFFE5E5E5) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _getBorderColor(),
-          width: 1.5,
-        ),
+        border: Border.all(color: _getBorderColor(), width: 1.3),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(11),
@@ -87,154 +159,74 @@ class TaskCard extends StatelessWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            child: SizedBox(
-              height: completed ? 165 : 145,
-              child: Stack(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      12,
-                      12,
-                      55,
-                      10,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Task title.
-                        Text(
-                          task.judul,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: completed
-                                ? const Color(0xFF777777)
-                                : navy,
-                            decoration: completed
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                            decorationColor: const Color(0xFF777777),
-                            decorationThickness: 1.5,
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        // Task description.
-                        Text(
-                          task.deskripsi,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: completed
-                                ? const Color(0xFF858585)
-                                : const Color(0xFF6F6F6F),
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        // Task status.
-                        Text(
-                          _getPriorityText(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: _getPriorityColor(),
-                          ),
-                        ),
-
-                        const SizedBox(height: 5),
-
-                        // Label and deadline.
-                        Row(
-                          children: [
-                            if (labelName.isNotEmpty)
-                              Container(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 100,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: completed
-                                      ? const Color(0xFFDCDCDC)
-                                      : const Color(0xFFEAF1FA),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  labelName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: completed
-                                        ? const Color(0xFF777777)
-                                        : const Color(0xFF526B8A),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-
-                            const SizedBox(width: 8),
-
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today_outlined,
-                                    size: 11,
-                                    color: completed
-                                        ? const Color(0xFF858585)
-                                        : const Color(0xFF777777),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      deadlineText,
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color: completed
-                                            ? const Color(0xFF858585)
-                                            : const Color(0xFF777777),
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                  // TASK TITLE AND CHECKBOX
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: Text(
+                            task.judul,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: completed ? const Color(0xFF777777) : navy,
+                              decoration: completed
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                              decorationColor: const Color(0xFF777777),
+                              decorationThickness: 1.5,
                             ),
-                          ],
+                          ),
                         ),
-                      ],
+                      ),
+                      const SizedBox(width: 5),
+                      _buildCheckbox(),
+                    ],
+                  ),
+
+                  // TASK DESCRIPTION
+                  if (task.deskripsi.trim().isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      task.deskripsi,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1.3,
+                        color: completed
+                            ? const Color(0xFF858585)
+                            : const Color(0xFF6F6F6F),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 6),
+
+                  // TASK STATUS
+                  Text(
+                    _getPriorityText(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: _getPriorityColor(),
                     ),
                   ),
 
-                  // Completion checkbox.
-                  Positioned(
-                    top: 7,
-                    right: 8,
-                    child: Checkbox(
-                      value: completed,
-                      onChanged: (_) => onChanged(),
-                      activeColor: completed
-                          ? const Color(0xFF858585)
-                          : navy,
-                      checkColor: Colors.white,
-                      side: const BorderSide(
-                        color: Color(0xFF8793A3),
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 6),
+
+                  // LABEL AND DEADLINE
+                  _buildLabelAndDeadline(deadlineText, completed),
                 ],
               ),
             ),

@@ -12,10 +12,7 @@ import '../services/dummy_data.dart';
 class TaskFormScreen extends StatefulWidget {
   final TaskModel? task;
 
-  const TaskFormScreen({
-    super.key,
-    this.task,
-  });
+  const TaskFormScreen({super.key, this.task});
 
   @override
   State<TaskFormScreen> createState() => _TaskFormScreenState();
@@ -47,9 +44,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
   void initState() {
     super.initState();
 
-    _judulController = TextEditingController(
-      text: widget.task?.judul ?? '',
-    );
+    _judulController = TextEditingController(text: widget.task?.judul ?? '');
 
     _deskripsiController = TextEditingController(
       text: widget.task?.deskripsi ?? '',
@@ -65,15 +60,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
 
     if (_labelInitialized) return;
 
-    final userId =
-        context.read<AuthProvider>().user?.id ??
-            DummyData.user.id;
+    final userId = context.read<AuthProvider>().user?.id ?? DummyData.user.id;
 
-    final labels =
-        context.read<LabelProvider>().getLabelsForUser(userId);
+    final labels = context.read<LabelProvider>().getLabelsForUser(userId);
 
-    if (_selectedLabelId == null &&
-        widget.task?.labelName != null) {
+    if (_selectedLabelId == null && widget.task?.labelName != null) {
       for (final label in labels) {
         if (label.namaLabel.toLowerCase() ==
             widget.task!.labelName!.toLowerCase()) {
@@ -121,7 +112,8 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     if (selectedDate == null || !mounted) return;
 
     setState(() {
-      final currentTime = _deadline ??
+      final currentTime =
+          _deadline ??
           DateTime(
             selectedDate.year,
             selectedDate.month,
@@ -203,11 +195,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     color: Color(0xFFFFF0D9),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.undo_rounded,
-                    color: navy,
-                    size: 22,
-                  ),
+                  child: const Icon(Icons.undo_rounded, color: navy, size: 22),
                 ),
                 const SizedBox(height: 14),
                 const Text(
@@ -222,11 +210,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 const Text(
                   'You have unsaved changes. Leaving now will discard your edits.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: mutedText,
-                    fontSize: 11,
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: mutedText, fontSize: 11, height: 1.5),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -263,9 +247,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: navy,
-                      side: const BorderSide(
-                        color: borderColor,
-                      ),
+                      side: const BorderSide(color: borderColor),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(9),
                       ),
@@ -331,10 +313,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 22,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -419,11 +398,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 const Text(
                   'Your task wasn’t saved. Check your connection and try again.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: mutedText,
-                    fontSize: 10,
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: mutedText, fontSize: 10, height: 1.5),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -460,9 +435,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: navy,
-                      side: const BorderSide(
-                        color: borderColor,
-                      ),
+                      side: const BorderSide(color: borderColor),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(9),
                       ),
@@ -517,7 +490,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  _isEditing ? 'Task saved!' : 'Task added!',
+                  _isEditing ? 'Task updated!' : 'Task added!',
                   style: const TextStyle(
                     color: navy,
                     fontSize: 16,
@@ -528,11 +501,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                 const Text(
                   'Your task has been saved successfully. You are all set!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: mutedText,
-                    fontSize: 11,
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: mutedText, fontSize: 11, height: 1.5),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -586,11 +555,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  icon,
-                  color: orange,
-                  size: 35,
-                ),
+                Icon(icon, color: orange, size: 35),
                 const SizedBox(height: 12),
                 Text(
                   title,
@@ -645,11 +610,14 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
   }
 
   // Perform task save.
-  void _performTaskSave() {
-    final userId =
-        context.read<AuthProvider>().user?.id ??
-            DummyData.user.id;
+  Future<void> _performTaskSave() async {
+    final user = context.read<AuthProvider>().user;
 
+    if (user == null) {
+      throw StateError('User must be authenticated before saving a task.');
+    }
+
+    final userId = user.id;
     final labelProvider = context.read<LabelProvider>();
 
     LabelModel? selectedLabel;
@@ -664,7 +632,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
     final taskProvider = context.read<TaskProvider>();
 
     if (_isEditing) {
-      taskProvider.updateTask(
+      await taskProvider.updateTask(
         id: widget.task!.id,
         labelId: selectedLabel?.id,
         labelName: selectedLabel?.namaLabel,
@@ -674,7 +642,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         isCompleted: widget.task!.isCompleted,
       );
     } else {
-      taskProvider.addTask(
+      await taskProvider.addTask(
         userId: userId,
         labelId: selectedLabel?.id,
         labelName: selectedLabel?.namaLabel,
@@ -685,7 +653,6 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
       );
     }
   }
-
   // Save task.
   Future<void> _saveTask() async {
     if (_isSaving) return;
@@ -713,23 +680,18 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
         await WidgetsBinding.instance.endOfFrame;
 
         // Allow the dialog to be visible.
-        await Future.delayed(
-          const Duration(milliseconds: 800),
-        );
+        await Future.delayed(const Duration(milliseconds: 800));
 
         if (!mounted) return;
 
         try {
           // Save or update task.
-          _performTaskSave();
+          await _performTaskSave();
 
           if (!mounted) return;
 
           // Close saving dialog.
-          Navigator.of(
-            context,
-            rootNavigator: true,
-          ).pop();
+          Navigator.of(context, rootNavigator: true).pop();
 
           await savingDialogFuture;
 
@@ -759,10 +721,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
           if (!mounted) return;
 
           // Close saving dialog.
-          Navigator.of(
-            context,
-            rootNavigator: true,
-          ).pop();
+          Navigator.of(context, rootNavigator: true).pop();
 
           await savingDialogFuture;
 
@@ -798,17 +757,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userId =
-        context.watch<AuthProvider>().user?.id ??
-            DummyData.user.id;
+    final userId = context.watch<AuthProvider>().user?.id ?? DummyData.user.id;
 
-    final labels = context
-        .watch<LabelProvider>()
-        .getLabelsForUser(userId);
+    final labels = context.watch<LabelProvider>().getLabelsForUser(userId);
 
-    final selectedLabelId = labels.any(
-      (label) => label.id == _selectedLabelId,
-    )
+    final selectedLabelId = labels.any((label) => label.id == _selectedLabelId)
         ? _selectedLabelId
         : null;
 
@@ -829,11 +782,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
           toolbarHeight: 52,
           leading: IconButton(
             onPressed: _isSaving ? null : _handleBack,
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              color: navy,
-              size: 17,
-            ),
+            icon: const Icon(Icons.arrow_back_ios_new, color: navy, size: 17),
           ),
           title: Text(
             _isEditing ? 'Edit Task' : 'Add Task',
@@ -857,18 +806,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   const SizedBox(height: 7),
                   TextFormField(
                     controller: _judulController,
-                    textCapitalization:
-                        TextCapitalization.sentences,
-                    style: const TextStyle(
-                      color: navy,
-                      fontSize: 12,
-                    ),
-                    decoration: _inputDecoration(
-                      'Enter task title',
-                    ),
+                    textCapitalization: TextCapitalization.sentences,
+                    style: const TextStyle(color: navy, fontSize: 12),
+                    decoration: _inputDecoration('Enter task title'),
                     validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Task title is required.';
                       }
                       return null;
@@ -883,63 +825,75 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     controller: _deskripsiController,
                     minLines: 3,
                     maxLines: 3,
-                    textCapitalization:
-                        TextCapitalization.sentences,
+                    textCapitalization: TextCapitalization.sentences,
                     style: const TextStyle(
                       color: navy,
                       fontSize: 12,
                       height: 1.4,
                     ),
-                    decoration: _inputDecoration(
-                      'Enter task description',
-                    ).copyWith(
-                      contentPadding: const EdgeInsets.all(12),
-                      alignLabelWithHint: true,
-                    ),
+                    decoration: _inputDecoration('Enter task description')
+                        .copyWith(
+                          contentPadding: const EdgeInsets.all(12),
+                          alignLabelWithHint: true,
+                        ),
                   ),
 
                   const SizedBox(height: 15),
 
                   _buildFieldTitle('Course / Label'),
                   const SizedBox(height: 7),
-                  DropdownButtonFormField<int>(
+
+                  DropdownButtonFormField<int?>(
                     initialValue: selectedLabelId,
                     isExpanded: true,
+
+                    // Warna dan bentuk field disamakan dengan input lainnya.
+                    decoration: _inputDecoration('Select a label').copyWith(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+
+                    // Tampilan teks.
+                    style: const TextStyle(color: navy, fontSize: 12),
+
+                    // Warna menu dropdown.
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(9),
+                    menuMaxHeight: 280,
+
+                    // Ikon dropdown.
                     icon: const Icon(
                       Icons.keyboard_arrow_down_rounded,
                       color: mutedText,
                       size: 20,
                     ),
-                    style: const TextStyle(
-                      color: navy,
-                      fontSize: 12,
-                    ),
-                    decoration: _inputDecoration(
-                      'Select a label',
-                    ).copyWith(
-                      contentPadding:
-                          const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                    ),
-                    hint: const Text(
-                      'Select a label',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: mutedText,
-                      ),
-                    ),
-                    items: labels.map((label) {
-                      return DropdownMenuItem<int>(
-                        value: label.id,
+
+                    // Daftar pilihan label.
+                    items: <DropdownMenuItem<int?>>[
+                      const DropdownMenuItem<int?>(
+                        value: null,
                         child: Text(
-                          label.namaLabel,
-                          overflow: TextOverflow.ellipsis,
+                          'No Label',
+                          style: TextStyle(color: navy, fontSize: 12),
                         ),
-                      );
-                    }).toList(),
-                    onChanged: _isSaving || labels.isEmpty
+                      ),
+
+                      ...labels.map((label) {
+                        return DropdownMenuItem<int?>(
+                          value: label.id,
+                          child: Text(
+                            label.namaLabel,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: navy, fontSize: 12),
+                          ),
+                        );
+                      }),
+                    ],
+
+                    // Memilih label.
+                    onChanged: _isSaving
                         ? null
                         : (value) {
                             setState(() {
@@ -977,8 +931,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                           title: 'Time',
                           value: _deadline == null
                               ? '23:59'
-                              : DateFormat('HH:mm')
-                                  .format(_deadline!),
+                              : DateFormat('HH:mm').format(_deadline!),
                           icon: Icons.access_time,
                           onTap: _isSaving ? () {} : _selectTime,
                         ),
@@ -1016,8 +969,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: orange,
                         foregroundColor: navy,
-                        disabledBackgroundColor:
-                            orange.withValues(alpha: 0.6),
+                        disabledBackgroundColor: orange.withValues(alpha: 0.6),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(9),
@@ -1033,9 +985,7 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                               ),
                             )
                           : Text(
-                              _isEditing
-                                  ? 'Save Changes'
-                                  : 'Add Task',
+                              _isEditing ? 'Save Changes' : 'Add Task',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
@@ -1088,15 +1038,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
           borderRadius: BorderRadius.circular(9),
           child: Container(
             height: 38,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 9,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 9),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(9),
-              border: Border.all(
-                color: borderColor,
-              ),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               children: [
@@ -1105,18 +1051,11 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: navy,
-                      fontSize: 10,
-                    ),
+                    style: const TextStyle(color: navy, fontSize: 10),
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(
-                  icon,
-                  color: mutedText,
-                  size: 14,
-                ),
+                Icon(icon, color: mutedText, size: 14),
               ],
             ),
           ),
@@ -1129,46 +1068,30 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(
-        color: mutedText,
-        fontSize: 11,
-      ),
+      hintStyle: const TextStyle(color: mutedText, fontSize: 11),
       filled: true,
       fillColor: Colors.white,
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 13,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(
-          color: borderColor,
-        ),
+        borderSide: const BorderSide(color: borderColor),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(
-          color: orange,
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: orange, width: 1.2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(
-          color: Colors.redAccent,
-        ),
+        borderSide: const BorderSide(color: Colors.redAccent),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(
-          color: Colors.redAccent,
-          width: 1.2,
-        ),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
       ),
     );
   }

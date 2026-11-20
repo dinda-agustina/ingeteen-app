@@ -1,60 +1,74 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/label_model.dart';
-import '../services/dummy_data.dart';
+import '../services/label_service.dart';
 
 class LabelProvider extends ChangeNotifier {
+  final LabelService _labelService;
+
   final List<LabelModel> _labels = [];
-  final Set<int> _initializedUserIds = {};
 
-  late int _nextId;
+  bool _isLoading = false;
+  bool _hasLoaded = false;
+  String? _errorMessage;
 
-  LabelProvider() {
-    final labelIds = DummyData.labels.map((label) => label.id);
+  int _requestVersion = 0;
 
-    final taskLabelIds = DummyData.tasks
-        .map((task) => task.labelId)
-        .whereType<int>();
+  LabelProvider({LabelService? labelService})
+      : _labelService = labelService ?? LabelService();
 
-    final allIds = [...labelIds, ...taskLabelIds];
+  // Status loading.
+  bool get isLoading => _isLoading;
 
-    _nextId = allIds.isEmpty
-        ? 1
-        : allIds.reduce((a, b) => a > b ? a : b) + 1;
-  }
+  // Pesan error.
+  String? get errorMessage => _errorMessage;
 
-  // Get labels belonging to a user.
+  // Mengambil label milik user.
   List<LabelModel> getLabelsForUser(int userId) {
     return _labels
         .where((label) => label.userId == userId)
         .toList();
   }
 
-  // Initialize default labels for a user.
-  void ensureDefaultLabelsForUser(int userId) {
-    if (_initializedUserIds.contains(userId)) return;
+  // READ: Mengambil label dari API.
+  Future<void> loadLabels({bool forceRefresh = false}) async {
+    if (_isLoading) return;
+    if (_hasLoaded && !forceRefresh) return;
 
-    for (final defaultLabel in DummyData.labels) {
-      _labels.add(
-        LabelModel(
-          id: defaultLabel.id,
-          userId: userId,
-          namaLabel: defaultLabel.namaLabel,
-          kodeWarna: defaultLabel.kodeWarna,
-        ),
-      );
-    }
+    final currentVersion = _requestVersion;
 
-    _initializedUserIds.add(userId);
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
+    try {
+      final loadedLabels = await _labelService.getLabels();
+
+      if (currentVersion != _requestVersion) return;
+
+      _labels
+        ..clear()
+        ..addAll(loadedLabels);
+
+      _hasLoaded = true;
+    } catch (error) {
+      if (currentVersion == _requestVersion) {
+        _errorMessage = error.toString();
+      }
+    } finally {
+      if (currentVersion == _requestVersion) {
+        _isLoading = false;
+        notifyListeners();
+      }
+    }
   }
 
-  // Add a new label.
-  bool addLabel({
+  // CREATE: Membuat label melalui API.
+  Future<bool> addLabel({
     required int userId,
     required String labelName,
     String? colorCode,
-  }) {
+  }) async {
     final trimmedName = labelName.trim();
 
     if (trimmedName.isEmpty) return false;
@@ -68,35 +82,35 @@ class LabelProvider extends ChangeNotifier {
 
     if (alreadyExists) return false;
 
-    _labels.add(
-      LabelModel(
-        id: _nextId++,
-        userId: userId,
-        namaLabel: trimmedName,
-        kodeWarna: colorCode,
-      ),
+    final newLabel = await _labelService.createLabel(
+      namaLabel: trimmedName,
+      kodeWarna: colorCode,
     );
+
+    if (newLabel.userId != userId) {
+      throw StateError('Label owner does not match the logged-in user.');
+    }
+
+    _labels.add(newLabel);
 
     notifyListeners();
     return true;
   }
 
-  // Update an existing label.
-  bool updateLabel({
+  // UPDATE: Memperbarui label melalui API.
+  Future<bool> updateLabel({
     required int userId,
     required int labelId,
     required String labelName,
     String? colorCode,
     bool clearColor = false,
-  }) {
+  }) async {
     final trimmedName = labelName.trim();
 
     if (trimmedName.isEmpty) return false;
 
     final index = _labels.indexWhere(
-      (label) =>
-          label.id == labelId &&
-          label.userId == userId,
+      (label) => label.id == labelId && label.userId == userId,
     );
 
     if (index == -1) return false;
@@ -113,35 +127,54 @@ class LabelProvider extends ChangeNotifier {
 
     final currentLabel = _labels[index];
 
-    _labels[index] = LabelModel(
-      id: currentLabel.id,
-      userId: currentLabel.userId,
+    final selectedColor = clearColor
+        ? '#E3DDD0'
+        : colorCode ?? currentLabel.kodeWarna ?? '#E3DDD0';
+
+    final updatedLabel = await _labelService.updateLabel(
+      id: labelId,
       namaLabel: trimmedName,
-      kodeWarna: clearColor
-          ? null
-          : colorCode ?? currentLabel.kodeWarna,
+      kodeWarna: selectedColor,
     );
+
+    if (updatedLabel.userId != userId) {
+      throw StateError('Label owner does not match the logged-in user.');
+    }
+
+    _labels[index] = updatedLabel;
 
     notifyListeners();
     return true;
   }
 
-  // Delete a label.
-  bool deleteLabel({
+  // DELETE: Menghapus label melalui API.
+  Future<bool> deleteLabel({
     required int userId,
     required int labelId,
-  }) {
+  }) async {
     final index = _labels.indexWhere(
-      (label) =>
-          label.id == labelId &&
-          label.userId == userId,
+      (label) => label.id == labelId && label.userId == userId,
     );
 
     if (index == -1) return false;
+
+    await _labelService.deleteLabel(labelId);
 
     _labels.removeAt(index);
 
     notifyListeners();
     return true;
+  }
+
+  // Membersihkan label saat logout.
+  void clearLabels() {
+    _requestVersion++;
+
+    _labels.clear();
+    _isLoading = false;
+    _hasLoaded = false;
+    _errorMessage = null;
+
+    notifyListeners();
   }
 }
