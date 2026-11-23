@@ -16,9 +16,28 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int selectedTab = 0;
 
+  String _getInitials(String username) {
+    final words = username
+        .trim()
+        .split(RegExp(r'[\s._-]+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+
+    if (words.isEmpty) return 'U';
+
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    }
+
+    final name = words.first;
+    return name.substring(0, name.length > 1 ? 2 : 1).toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
+    final username = user?.username ?? 'User';
+    final initials = _getInitials(username);
 
     final pendingTasks = dummyTasks.where((task) => !task.completed).toList();
 
@@ -77,17 +96,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF7FB3FF),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.profile);
+                    },
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF7FB3FF),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
                       child: Text(
-                        'US',
-                        style: TextStyle(
+                        initials,
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF26364D),
@@ -235,6 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const cream = Color(0xFFF9F5E9);
     const orange = Color(0xFFFFB31A);
     const yellow = Color(0xFFFFEAA7);
+    final initials = _getInitials(username);
 
     Widget menuItem(IconData icon, String title, {bool selected = false}) {
       return Container(
@@ -334,47 +359,62 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF7FB3FF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'US',
-                          style: TextStyle(
-                            color: navy,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    Expanded(
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.profile);
+                        },
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF7FB3FF),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                initials,
+                                style: const TextStyle(
+                                  color: navy,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    username,
+                                    style: const TextStyle(
+                                      color: navy,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  const Text(
+                                    'Profile Settings',
+                                    style: TextStyle(
+                                      color: orange,
+                                      fontSize: 9,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            username,
-                            style: const TextStyle(
-                              color: navy,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          const Text(
-                            'Pengaturan Profil',
-                            style: TextStyle(color: orange, fontSize: 9),
-                          ),
-                        ],
-                      ),
-                    ),
                     IconButton(
-                      tooltip: 'Keluar',
+                      tooltip: 'Log Out',
                       onPressed: () {
                         context.read<AuthProvider>().logout();
 
