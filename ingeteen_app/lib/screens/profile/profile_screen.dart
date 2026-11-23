@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../../utils/app_routes.dart';
+import 'notification_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -27,13 +28,18 @@ class ProfileScreen extends StatelessWidget {
   void _logout(BuildContext context) {
     context.read<AuthProvider>().logout();
 
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+      (_) => false,
+    );
   }
 
   void _openNotificationSettings(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Notification settings are being prepared.'),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const NotificationSettingsScreen(),
       ),
     );
   }
@@ -56,7 +62,11 @@ class ProfileScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: navy, size: 21),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: navy,
+            size: 21,
+          ),
         ),
         title: const Text(
           'Profile',
@@ -74,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // User profile card
+              // User profile card.
               Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 16,
@@ -137,19 +147,19 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // Notifications card
+              // Notifications card.
               Material(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(15),
                   onTap: () => _openNotificationSettings(context),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(
                       horizontal: 14,
                       vertical: 17,
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -176,7 +186,7 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // Log out button
+              // Log out button.
               SizedBox(
                 height: 42,
                 child: OutlinedButton(
@@ -184,14 +194,20 @@ class ProfileScreen extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: red,
                     backgroundColor: const Color(0xFFFFF0E8),
-                    side: const BorderSide(color: red, width: 1),
+                    side: const BorderSide(
+                      color: red,
+                      width: 1,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: const Text(
                     'Log Out',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
