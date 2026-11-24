@@ -43,10 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
 
-      // Mengambil data Task dari Laravel API.
       context.read<TaskProvider>().loadTasks();
-
-      // Mengambil data Label dari Laravel API.
       context.read<LabelProvider>().loadLabels(forceRefresh: true);
     });
   }
@@ -57,7 +54,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Greeting berdasarkan waktu.
   String _getGreeting() {
     final hour = DateTime.now().hour;
     final day = DateTime.now().day;
@@ -93,7 +89,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return greetings[day % greetings.length];
   }
 
-  // Membuka form tambah atau edit tugas.
   Future<void> _openTaskForm({TaskModel? task}) async {
     await Navigator.push(
       context,
@@ -101,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Membuka detail tugas.
   Future<void> _openTaskDetail(TaskModel task) async {
     final deleted = await Navigator.push<bool>(
       context,
@@ -200,34 +194,28 @@ class _HomeScreenState extends State<HomeScreen> {
     final taskProvider = context.watch<TaskProvider>();
     final labelProvider = context.watch<LabelProvider>();
 
-    // Ambil label milik pengguna yang sedang login.
     final userLabels = user == null
         ? []
         : labelProvider.getLabelsForUser(user.id);
 
-    // Ambil warna label berdasarkan ID.
     final Map<int, Color> labelColorsById = {
       for (final label in userLabels) label.id: label.color,
     };
 
-    // Ambil tugas milik pengguna yang sedang login.
     final allTasks = taskProvider.tasks.where((task) {
       return user != null && task.userId == user.id;
     }).toList();
 
-    // Pisahkan tugas berdasarkan status.
     final baseTabTasks = selectedTab == 0
         ? allTasks.where((task) => !task.isCompleted).toList()
         : allTasks.where((task) => task.isCompleted).toList();
 
-    // Terapkan filter Urgent.
     final tabTasks = _showUrgentOnly
         ? baseTabTasks
-              .where((task) => task.deadlineLevel == DeadlineLevel.urgent)
-              .toList()
+            .where((task) => task.deadlineLevel == DeadlineLevel.urgent)
+            .toList()
         : baseTabTasks;
 
-    // Terapkan pencarian.
     final query = searchQuery.trim().toLowerCase();
 
     final filteredTasks = tabTasks.where((task) {
@@ -242,9 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: cream,
-
       drawer: _buildDrawer(context, user?.username ?? 'User'),
-
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -266,9 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                   ),
-
                   const SizedBox(width: 8),
-
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +278,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-
                   Container(
                     width: 40,
                     height: 40,
@@ -336,9 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   children: [
                     const Icon(Icons.search, size: 19, color: mutedText),
-
                     const SizedBox(width: 8),
-
                     Expanded(
                       child: TextField(
                         controller: _searchController,
@@ -359,12 +340,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: const TextStyle(fontSize: 12, color: navy),
                       ),
                     ),
-
                     if (searchQuery.isNotEmpty)
                       IconButton(
                         onPressed: () {
                           _searchController.clear();
-
                           setState(() {
                             searchQuery = '';
                           });
@@ -391,14 +370,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: navy,
                 ),
               ),
-
               const SizedBox(height: 4),
-
               const Text(
                 'Organize your priorities and get things done.',
                 style: TextStyle(fontSize: 10, color: mutedText),
               ),
-
               const SizedBox(height: 14),
 
               // PENDING AND COMPLETED TABS
@@ -422,58 +398,53 @@ class _HomeScreenState extends State<HomeScreen> {
               // TASK LIST
               Expanded(
                 child: taskProvider.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : taskProvider.errorMessage != null
-                    ? Center(
-                        child: Text(taskProvider.errorMessage!),
+                    ? const Center(
+                        child: CircularProgressIndicator(),
                       )
-                      : filteredTasks.isNotEmpty
-                              ? ListView.builder(
-                                  padding: EdgeInsets.zero,
-                                  itemCount: filteredTasks.length,
-                                  itemBuilder: (context, index) {
-                                    final task = filteredTasks[index];
+                    : taskProvider.errorMessage != null
+                        ? Center(
+                            child: Text(taskProvider.errorMessage!),
+                          )
+                        : filteredTasks.isNotEmpty
+                            ? ListView.builder(
+                                padding: EdgeInsets.zero,
+                                itemCount: filteredTasks.length,
+                                itemBuilder: (context, index) {
+                                  final task = filteredTasks[index];
 
-                                    return TaskCard(
-                                      task: task,
-                                      labelName: task.labelName?.trim() ?? '',
-
-                                      // Warna badge mengikuti warna label.
-                                      labelColor:
-                                          labelColorsById[task.labelId] ??
-                                          const Color(0xFFE3DDD0),
-
-                                      onChanged: () {
-                                        context.read<TaskProvider>().toggleTaskStatus(
-                                          task.id,
-                                        );
-                                      },
-
-                                      onTap: () {
-                                        _openTaskDetail(task);
-                                      },
-                                    );
-                                  },
-                                )
-                              : _buildEmptyState(
-                                  icon: _getEmptyIcon(
-                                    searchQuery: searchQuery,
-                                    selectedTab: selectedTab,
-                                    allTasks: allTasks,
-                                  ),
-                                  title: _getEmptyTitle(
-                                    searchQuery: searchQuery,
-                                    selectedTab: selectedTab,
-                                    allTasks: allTasks,
-                                  ),
-                                  message: _getEmptyMessage(
-                                    searchQuery: searchQuery,
-                                    selectedTab: selectedTab,
-                                    allTasks: allTasks,
-                                  ),
+                                  return TaskCard(
+                                    task: task,
+                                    labelName: task.labelName?.trim() ?? '',
+                                    labelColor: labelColorsById[task.labelId] ??
+                                        const Color(0xFFE3DDD0),
+                                    onChanged: () {
+                                      context
+                                          .read<TaskProvider>()
+                                          .toggleTaskStatus(task.id);
+                                    },
+                                    onTap: () {
+                                      _openTaskDetail(task);
+                                    },
+                                  );
+                                },
+                              )
+                            : _buildEmptyState(
+                                icon: _getEmptyIcon(
+                                  searchQuery: searchQuery,
+                                  selectedTab: selectedTab,
+                                  allTasks: allTasks,
                                 ),
+                                title: _getEmptyTitle(
+                                  searchQuery: searchQuery,
+                                  selectedTab: selectedTab,
+                                  allTasks: allTasks,
+                                ),
+                                message: _getEmptyMessage(
+                                  searchQuery: searchQuery,
+                                  selectedTab: selectedTab,
+                                  allTasks: allTasks,
+                                ),
+                              ),
               ),
             ],
           ),
@@ -495,7 +466,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // EMPTY STATE ICON
   IconData _getEmptyIcon({
     required String searchQuery,
     required int selectedTab,
@@ -516,7 +486,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Icons.task_alt;
   }
 
-  // EMPTY STATE TITLE
   String _getEmptyTitle({
     required String searchQuery,
     required int selectedTab,
@@ -537,7 +506,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return _showUrgentOnly ? 'No urgent tasks' : 'No pending tasks';
   }
 
-  // EMPTY STATE MESSAGE
   String _getEmptyMessage({
     required String searchQuery,
     required int selectedTab,
@@ -560,7 +528,6 @@ class _HomeScreenState extends State<HomeScreen> {
         : 'You have no pending tasks right now.';
   }
 
-  // EMPTY STATE WIDGET
   Widget _buildEmptyState({
     required IconData icon,
     required String title,
@@ -580,9 +547,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Icon(icon, size: 52, color: navy),
             ),
-
             const SizedBox(height: 20),
-
             Text(
               title,
               textAlign: TextAlign.center,
@@ -592,9 +557,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: navy,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
@@ -613,7 +576,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // TAB BUTTON
   Widget _buildTab(String title, int index) {
     final selected = selectedTab == index;
 
@@ -648,7 +610,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDrawer(BuildContext context, String username) {
     const selectedBackground = Color(0xFFFFE8B0);
 
-    Widget menuItem(IconData icon, String title, {bool selected = false}) {
+    Widget menuItem(
+      IconData icon,
+      String title, {
+      bool selected = false,
+      VoidCallback? onTap,
+    }) {
       return Container(
         margin: const EdgeInsets.only(bottom: 4),
         decoration: BoxDecoration(
@@ -666,23 +633,24 @@ class _HomeScreenState extends State<HomeScreen> {
               fontWeight: selected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
-          onTap: () {
-            Navigator.pop(context);
+          onTap: onTap ??
+              () {
+                Navigator.pop(context);
 
-            if (title == 'Labels') {
-              Navigator.pushNamed(context, AppRoutes.label);
-            } else if (title == 'Urgent') {
-              setState(() {
-                selectedTab = 0;
-                _showUrgentOnly = true;
-              });
-            } else if (title == 'All Tasks') {
-              setState(() {
-                selectedTab = 0;
-                _showUrgentOnly = false;
-              });
-            }
-          },
+                if (title == 'Labels') {
+                  Navigator.pushNamed(context, AppRoutes.label);
+                } else if (title == 'Urgent') {
+                  setState(() {
+                    selectedTab = 0;
+                    _showUrgentOnly = true;
+                  });
+                } else if (title == 'All Tasks') {
+                  setState(() {
+                    selectedTab = 0;
+                    _showUrgentOnly = false;
+                  });
+                }
+              },
         ),
       );
     }
@@ -714,7 +682,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Urgent',
                     selected: _showUrgentOnly,
                   ),
-                  menuItem(Icons.label_outline, 'Labels'),
+                  menuItem(
+                    Icons.label_outline,
+                    'Labels',
+                  ),
+                  menuItem(
+                    Icons.archive_outlined,
+                    'Archive',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.archive);
+                    },
+                  ),
+                  menuItem(
+                    Icons.delete_outline,
+                    'Trash',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, AppRoutes.trash);
+                    },
+                  ),
                 ],
               ),
             ),
@@ -759,9 +746,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(width: 12),
-
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -774,17 +759,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-
                           const SizedBox(height: 3),
-
                           const Text(
                             'Profile Settings',
-                            style: TextStyle(color: mutedText, fontSize: 9),
+                            style: TextStyle(
+                              color: mutedText,
+                              fontSize: 9,
+                            ),
                           ),
                         ],
                       ),
                     ),
-
                     IconButton(
                       tooltip: 'Log out',
                       onPressed: () {
@@ -796,7 +781,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           (_) => false,
                         );
                       },
-                      icon: const Icon(Icons.logout, color: navy, size: 20),
+                      icon: const Icon(
+                        Icons.logout,
+                        color: navy,
+                        size: 20,
+                      ),
                     ),
                   ],
                 ),
