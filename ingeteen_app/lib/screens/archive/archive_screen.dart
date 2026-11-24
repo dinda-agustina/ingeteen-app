@@ -20,7 +20,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   static const Color orange = Color(0xFFFFB31A);
   static const Color muted = Color(0xFF8490A0);
   static const Color cardBorder = Color(0xFFE8E5DC);
-  static const Color red = Color(0xFFB8202D);
+  static const Color red = Color(0xFFE45B64);
+  static const Color softRed = Color(0xFFFFEEEE);
+  static const Color selectedBlue = Color(0xFFF0F5FF);
 
   bool _showCompleted = false;
   bool _isSelectionMode = false;
@@ -106,92 +108,158 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         );
       }
 
-      if (_selectedIds.isEmpty) {
-        _isSelectionMode = false;
-      } else {
-        _isSelectionMode = true;
-      }
+      _isSelectionMode = _selectedIds.isNotEmpty;
     });
   }
 
-  Future<bool> _confirmMoveToTrash(int count) async {
+  Future<bool> _showConfirmationDialog({
+    required String heading,
+    required String title,
+    required String description,
+    required String cancelText,
+    required String confirmText,
+    required Color confirmColor,
+    required Color headingColor,
+  }) async {
     final result = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
-        return AlertDialog(
+        return Dialog(
           backgroundColor: Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-          title: const Text(
-            'MOVE TO TRASH',
-            style: TextStyle(
-              color: red,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  heading.toUpperCase(),
+                  style: TextStyle(
+                    color: headingColor,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 13),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: navy,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: muted,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 43,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, false);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF1F1EF),
+                            foregroundColor: navy,
+                            side: BorderSide.none,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                          ),
+                          child: Text(
+                            cancelText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: SizedBox(
+                        height: 43,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(dialogContext, true);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: confirmColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(9),
+                            ),
+                          ),
+                          child: Text(
+                            confirmText,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                count == 1
-                    ? 'Move this item to Trash?'
-                    : 'Move $count items to Trash?',
-                style: const TextStyle(
-                  color: navy,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'The selected tasks will be moved to Trash. '
-                'You can restore them later from the Trash page.',
-                style: TextStyle(
-                  color: muted,
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            OutlinedButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, false);
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: navy,
-                side: const BorderSide(color: cardBorder),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, true);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: red,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text('Move to Trash'),
-            ),
-          ],
         );
       },
     );
 
     return result == true;
+  }
+
+  Future<bool> _confirmMoveToTrash(int count) {
+    return _showConfirmationDialog(
+      heading: 'Move to Trash',
+      title: count == 1
+          ? 'Delete item?'
+          : 'Delete $count items?',
+      description: count == 1
+          ? 'This item will be moved to Trash. You can restore it later from the Trash page.'
+          : 'These $count items will be moved to Trash. You can restore them later from the Trash page.',
+      cancelText: 'Cancel',
+      confirmText: count == 1 ? 'Delete Item' : 'Delete Items',
+      confirmColor: red,
+      headingColor: red,
+    );
+  }
+
+  Future<bool> _confirmUnarchive(int count) {
+    return _showConfirmationDialog(
+      heading: 'Move out of Archive',
+      title: count == 1
+          ? 'Unarchive 1 item?'
+          : 'Unarchive $count items?',
+      description: count == 1
+          ? 'This item will return to its original list. You can archive it again anytime.'
+          : 'These $count items will return to their original list. You can archive them again anytime.',
+      cancelText: 'Cancel',
+      confirmText: 'Unarchive',
+      confirmColor: navy,
+      headingColor: navy,
+    );
   }
 
   Future<void> _moveTasksToTrash(
@@ -253,24 +321,44 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     }
   }
 
-  Future<void> _restoreTask(int taskId, int userId) async {
-    if (_isProcessing) return;
+  Future<void> _unarchiveTasks(
+    List<int> taskIds,
+    int userId,
+  ) async {
+    if (taskIds.isEmpty || _isProcessing) return;
+
+    final confirmed = await _confirmUnarchive(taskIds.length);
+
+    if (!confirmed || !mounted) return;
 
     setState(() {
       _isProcessing = true;
     });
 
     try {
-      await context.read<TaskProvider>().unarchiveTask(
-            taskId,
-            userId: userId,
-          );
+      final provider = context.read<TaskProvider>();
+
+      for (final id in taskIds) {
+        await provider.unarchiveTask(
+          id,
+          userId: userId,
+        );
+      }
 
       if (!mounted) return;
 
+      setState(() {
+        _selectedIds.clear();
+        _isSelectionMode = false;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task restored to Home.'),
+        SnackBar(
+          content: Text(
+            taskIds.length == 1
+                ? 'Task restored to Home.'
+                : '${taskIds.length} tasks restored to Home.',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -279,7 +367,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to restore task: $e'),
+          content: Text('Failed to restore tasks: $e'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -379,14 +467,12 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 visibleTasks,
               ),
             Expanded(
-              child: user == null
+              child: user == null || visibleTasks.isEmpty
                   ? _buildEmptyState()
-                  : visibleTasks.isEmpty
-                      ? _buildEmptyState()
-                      : _buildTaskList(
-                          visibleTasks,
-                          user.id,
-                        ),
+                  : _buildTaskList(
+                      visibleTasks,
+                      user.id,
+                    ),
             ),
           ],
         ),
@@ -464,7 +550,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         children: [
           const Expanded(
             child: Text(
-              'Choose items to move to Trash',
+              'Choose items to manage',
               style: TextStyle(
                 color: muted,
                 fontSize: 11,
@@ -472,7 +558,9 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
             ),
           ),
           TextButton(
-            onPressed: () => _selectAll(visibleTasks),
+            onPressed: _isProcessing
+                ? null
+                : () => _selectAll(visibleTasks),
             style: TextButton.styleFrom(
               backgroundColor: const Color(0xFFF0EDE4),
               foregroundColor: navy,
@@ -502,9 +590,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
       itemCount: tasks.length,
       itemBuilder: (context, index) {
-        final item = tasks[index];
-
-        return _buildTaskCard(item, userId);
+        return _buildTaskCard(tasks[index], userId);
       },
     );
   }
@@ -534,9 +620,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFFF0F5FF)
-              : Colors.white,
+          color: isSelected ? selectedBlue : Colors.white,
           borderRadius: BorderRadius.circular(13),
           border: Border.all(
             color: isSelected ? navy : cardBorder,
@@ -572,8 +656,8 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   _buildLabelChip(label),
               ],
             ),
-            const SizedBox(height: 7),
-            if (task.deskripsi.trim().isNotEmpty)
+            if (task.deskripsi.trim().isNotEmpty) ...[
+              const SizedBox(height: 7),
               Text(
                 task.deskripsi,
                 maxLines: 2,
@@ -584,11 +668,13 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   height: 1.4,
                 ),
               ),
-            if (!_isSelectionMode) ...[
-              const SizedBox(height: 8),
-              _buildLabelChip(label),
             ],
-            const SizedBox(height: 9),
+            const SizedBox(height: 8),
+            if (_isSelectionMode)
+              _buildLabelChip(label)
+            else
+              const SizedBox.shrink(),
+            const SizedBox(height: 8),
             _buildDateRow(
               Icons.calendar_today_outlined,
               'Created ${dateFormat.format(task.createdAt)}',
@@ -605,7 +691,7 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                   _buildCardAction(
                     'Restore',
                     orange,
-                    () => _restoreTask(task.id, userId),
+                    () => _unarchiveTasks([task.id], userId),
                   ),
                   const SizedBox(width: 9),
                   _buildCardAction(
@@ -763,8 +849,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
   }
 
   Widget _buildSelectionBottomBar(int? userId) {
+    final selectedIds = _selectedIds.toList();
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 10, 18, 20),
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
       decoration: const BoxDecoration(
         color: cream,
         border: Border(
@@ -785,42 +873,79 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
               ),
             ),
             const SizedBox(height: 9),
-            SizedBox(
-              height: 45,
-              child: ElevatedButton(
-                onPressed: _isProcessing || userId == null
-                    ? null
-                    : () => _moveTasksToTrash(
-                          _selectedIds.toList(),
-                          userId,
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: _isProcessing || userId == null
+                          ? null
+                          : () => _unarchiveTasks(
+                                selectedIds,
+                                userId,
+                              ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: navy,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            navy.withValues(alpha: 0.5),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9),
                         ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: red,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor:
-                      red.withValues(alpha: 0.5),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: _isProcessing
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              'Unarchive (${_selectedIds.length})',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
                   ),
                 ),
-                child: _isProcessing
-                    ? const SizedBox(
-                        width: 19,
-                        height: 19,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                const SizedBox(width: 9),
+                Expanded(
+                  child: SizedBox(
+                    height: 45,
+                    child: ElevatedButton(
+                      onPressed: _isProcessing || userId == null
+                          ? null
+                          : () => _moveTasksToTrash(
+                                selectedIds,
+                                userId,
+                              ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: softRed,
+                        foregroundColor: red,
+                        disabledBackgroundColor:
+                            softRed.withValues(alpha: 0.5),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9),
                         ),
-                      )
-                    : Text(
-                        'Move selected to Trash (${_selectedIds.length})',
+                      ),
+                      child: Text(
+                        'Delete (${_selectedIds.length})',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-              ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -923,8 +1048,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
                 ],
               ),
             ),
-
-            // PROFILE AND LOGOUT
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               child: Container(
