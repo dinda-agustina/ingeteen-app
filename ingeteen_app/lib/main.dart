@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
-import 'utils/app_routes.dart';
-import 'utils/app_theme.dart';
+import 'providers/task_provider.dart';
+import 'providers/label_provider.dart';
+import 'core/routes/app_routes.dart';
+import 'core/theme/app_theme.dart';
 
-void main() => runApp(const IngeTeenApp());
+void main() {
+  runApp(const IngeTeenApp());
+}
 
 class IngeTeenApp extends StatelessWidget {
   const IngeTeenApp({super.key});
@@ -15,7 +19,8 @@ class IngeTeenApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        // Segera: TaskProvider dan LabelProvider
+        ChangeNotifierProvider(create: (_) => TaskProvider()),
+        ChangeNotifierProvider(create: (_) => LabelProvider()),
       ],
       child: MaterialApp(
         title: 'IngeTeen',

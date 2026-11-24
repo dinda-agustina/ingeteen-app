@@ -11,7 +11,8 @@ class Validators {
   }
 
   static String? password(String v) {
-    final valid = v.length >= 8 &&
+    final valid =
+        v.length >= 8 &&
         RegExp(r'[A-Za-z]').hasMatch(v) &&
         RegExp(r'\d').hasMatch(v);
     return valid ? null : 'Minimal 8 karakter, gunakan huruf dan angka.';
