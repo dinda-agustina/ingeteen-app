@@ -22,6 +22,78 @@ class TaskService {
     }).toList();
   }
 
+  // Mengambil seluruh task yang diarsipkan.
+  Future<List<TaskModel>> getArchivedTasks() async {
+    final response = await _apiService.get(
+      '${ApiConfig.tasks}/archived',
+      withToken: true,
+    );
+
+    final data = response['data'] as List;
+
+    return data.map((item) {
+      return TaskModel.fromJson(_normalizeTaskJson(item));
+    }).toList();
+  }
+
+// Mengambil seluruh task yang berada di Trash.
+  Future<List<TaskModel>> getTrashedTasks() async {
+    final response = await _apiService.get(
+      '${ApiConfig.tasks}/trash',
+      withToken: true,
+    );
+
+    final data = response['data'] as List;
+
+    return data.map((item) {
+      return TaskModel.fromJson(_normalizeTaskJson(item));
+    }).toList();
+  }
+
+  // Memindahkan task ke Archive.
+  Future<TaskModel> archiveTask(int id) async {
+    final response = await _apiService.post(
+      '${ApiConfig.tasks}/$id/archive',
+      withToken: true,
+    );
+
+    return TaskModel.fromJson(
+      _normalizeTaskJson(response['data']),
+    );
+  }
+
+  // Mengembalikan task dari Archive ke Home.
+  Future<TaskModel> unarchiveTask(int id) async {
+    final response = await _apiService.post(
+      '${ApiConfig.tasks}/$id/unarchive',
+      withToken: true,
+    );
+
+    return TaskModel.fromJson(
+      _normalizeTaskJson(response['data']),
+    );
+  }
+
+  // Memulihkan task dari Trash.
+  Future<TaskModel> restoreTask(int id) async {
+    final response = await _apiService.post(
+      '${ApiConfig.tasks}/$id/restore',
+      withToken: true,
+    );
+
+    return TaskModel.fromJson(
+      _normalizeTaskJson(response['data']),
+    );
+  }
+
+  // Menghapus task secara permanen dari database.
+  Future<void> deleteTaskForever(int id) async {
+    await _apiService.delete(
+      '${ApiConfig.tasks}/$id/force',
+      withToken: true,
+    );
+  }
+
   // Menambahkan task baru.
   Future<TaskModel> createTask({
     required String judul,

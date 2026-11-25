@@ -1,12 +1,10 @@
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/task_model.dart';
 import '../services/task_service.dart';
 
-// Data tugas yang disimpan di Trash.
+// Data tugas yang ditampilkan di Trash.
 class TrashedTask {
   final TaskModel task;
   final DateTime deletedAt;
@@ -17,7 +15,7 @@ class TrashedTask {
   });
 }
 
-// Data tugas yang disimpan di Archive.
+// Data tugas yang ditampilkan di Archive.
 class ArchivedTask {
   final TaskModel task;
   final DateTime archivedAt;
@@ -30,25 +28,6 @@ class ArchivedTask {
 
 class TaskProvider extends ChangeNotifier {
   final TaskService _taskService;
-  final List<TaskModel> _tasks = [];
-
-  // =========================
-  // TRASH STATE
-  // =========================
-
-  final Map<int, List<TrashedTask>> _trashItems = {};
-  final Map<int, Set<int>> _permanentlyDeletedIds = {};
-  final Set<int> _loadedTrashUsers = {};
-
-  // =========================
-  // ARCHIVE STATE
-  // =========================
-
-  final Map<int, List<ArchivedTask>> _archiveItems = {};
-  final Set<int> _loadedArchiveUsers = {};
-
-  bool _isLoading = false;
-  String? _errorMessage;
 
   TaskProvider({TaskService? taskService})
       : _taskService = taskService ?? TaskService();
@@ -56,6 +35,14 @@ class TaskProvider extends ChangeNotifier {
   // =========================
   // STATE
   // =========================
+
+  final List<TaskModel> _tasks = [];
+
+  final Map<int, List<TrashedTask>> _trashItems = {};
+  final Map<int, List<ArchivedTask>> _archiveItems = {};
+
+  bool _isLoading = false;
+  String? _errorMessage;
 
   List<TaskModel> get tasks => List.unmodifiable(_tasks);
 
@@ -69,196 +56,20 @@ class TaskProvider extends ChangeNotifier {
   List<TaskModel> get completedTasks =>
       _tasks.where((task) => task.isCompleted).toList();
 
-  // Mengambil daftar Trash berdasarkan user ID.
+  // =========================
+  // TRASH & ARCHIVE ACCESSOR
+  // =========================
+
   List<TrashedTask> trashItemsForUser(int userId) {
     return List.unmodifiable(_trashItems[userId] ?? []);
   }
 
-  // Mengambil daftar Archive berdasarkan user ID.
   List<ArchivedTask> archiveItemsForUser(int userId) {
     return List.unmodifiable(_archiveItems[userId] ?? []);
   }
 
   // =========================
-  // LOCAL TASK SERIALIZATION
-  // =========================
-
-  Map<String, dynamic> _taskToLocalJson(TaskModel task) {
-    return {
-      ...task.toJson(),
-      'created_at': task.createdAt.toIso8601String(),
-      'updated_at': task.updatedAt.toIso8601String(),
-    };
-  }
-
-  // =========================
-  // LOCAL TRASH STORAGE
-  // =========================
-
-  String _trashStorageKey(int userId) {
-    return 'ingeteen_trash_$userId';
-  }
-
-  Future<void> _loadTrashForUser(int userId) async {
-    if (_loadedTrashUsers.contains(userId)) return;
-
-    final prefs = await SharedPreferences.getInstance();
-    final storedData = prefs.getString(_trashStorageKey(userId));
-
-    final items = <TrashedTask>[];
-    final deletedIds = <int>{};
-
-    if (storedData != null && storedData.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(storedData) as Map<String, dynamic>;
-
-        final storedItems = decoded['items'] as List? ?? [];
-
-        for (final entry in storedItems) {
-          final data = Map<String, dynamic>.from(entry as Map);
-
-          final taskJson =
-              Map<String, dynamic>.from(data['task'] as Map);
-
-          items.add(
-            TrashedTask(
-              task: TaskModel.fromJson(taskJson),
-              deletedAt: DateTime.parse(
-                data['deleted_at'] as String,
-              ),
-            ),
-          );
-        }
-
-        final storedDeletedIds =
-            decoded['permanently_deleted_ids'] as List? ?? [];
-
-        for (final id in storedDeletedIds) {
-          deletedIds.add((id as num).toInt());
-        }
-      } catch (e) {
-        debugPrint('Failed to load local Trash data: $e');
-      }
-    }
-
-    _trashItems[userId] = items;
-    _permanentlyDeletedIds[userId] = deletedIds;
-    _loadedTrashUsers.add(userId);
-
-    _tasks.removeWhere(
-      (task) =>
-          task.userId == userId &&
-          (items.any((item) => item.task.id == task.id) ||
-              deletedIds.contains(task.id)),
-    );
-  }
-
-  Future<void> _saveTrashForUser(int userId) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final items = _trashItems[userId] ?? [];
-    final deletedIds = _permanentlyDeletedIds[userId] ?? {};
-
-    final data = {
-      'items': items.map((item) {
-        return {
-          'task': _taskToLocalJson(item.task),
-          'deleted_at': item.deletedAt.toIso8601String(),
-        };
-      }).toList(),
-      'permanently_deleted_ids': deletedIds.toList(),
-    };
-
-    await prefs.setString(
-      _trashStorageKey(userId),
-      jsonEncode(data),
-    );
-  }
-
-  Future<void> loadTrash(int userId) async {
-    await _loadTrashForUser(userId);
-    notifyListeners();
-  }
-
-  // =========================
-  // LOCAL ARCHIVE STORAGE
-  // =========================
-
-  String _archiveStorageKey(int userId) {
-    return 'ingeteen_archive_$userId';
-  }
-
-  Future<void> _loadArchiveForUser(int userId) async {
-    if (_loadedArchiveUsers.contains(userId)) return;
-
-    final prefs = await SharedPreferences.getInstance();
-
-    final storedData = prefs.getString(
-      _archiveStorageKey(userId),
-    );
-
-    final items = <ArchivedTask>[];
-
-    if (storedData != null && storedData.isNotEmpty) {
-      try {
-        final decoded = jsonDecode(storedData) as List;
-
-        for (final entry in decoded) {
-          final data = Map<String, dynamic>.from(entry as Map);
-
-          final taskJson =
-              Map<String, dynamic>.from(data['task'] as Map);
-
-          items.add(
-            ArchivedTask(
-              task: TaskModel.fromJson(taskJson),
-              archivedAt: DateTime.parse(
-                data['archived_at'] as String,
-              ),
-            ),
-          );
-        }
-      } catch (e) {
-        debugPrint('Failed to load local Archive data: $e');
-      }
-    }
-
-    _archiveItems[userId] = items;
-    _loadedArchiveUsers.add(userId);
-
-    // Tugas yang sudah diarsipkan tidak boleh muncul di Home.
-    _tasks.removeWhere(
-      (task) =>
-          task.userId == userId &&
-          items.any((item) => item.task.id == task.id),
-    );
-  }
-
-  Future<void> _saveArchiveForUser(int userId) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final items = _archiveItems[userId] ?? [];
-
-    final data = items.map((item) {
-      return {
-        'task': _taskToLocalJson(item.task),
-        'archived_at': item.archivedAt.toIso8601String(),
-      };
-    }).toList();
-
-    await prefs.setString(
-      _archiveStorageKey(userId),
-      jsonEncode(data),
-    );
-  }
-
-  Future<void> loadArchive(int userId) async {
-    await _loadArchiveForUser(userId);
-    notifyListeners();
-  }
-
-  // =========================
-  // LOAD TASK
+  // LOAD TASKS (HOME)
   // =========================
 
   Future<void> loadTasks() async {
@@ -269,34 +80,17 @@ class TaskProvider extends ChangeNotifier {
     try {
       final result = await _taskService.getTasks();
 
-      final userIds = result.map((task) => task.userId).toSet();
-
-      // Muat Trash dan Archive setiap pengguna.
-      for (final userId in userIds) {
-        await _loadTrashForUser(userId);
-        await _loadArchiveForUser(userId);
-      }
-
-      final filteredTasks = result.where((task) {
-        final trashIds = (_trashItems[task.userId] ?? [])
-            .map((item) => item.task.id)
-            .toSet();
-
-        final archiveIds = (_archiveItems[task.userId] ?? [])
-            .map((item) => item.task.id)
-            .toSet();
-
-        final deletedIds =
-            _permanentlyDeletedIds[task.userId] ?? {};
-
-        return !trashIds.contains(task.id) &&
-            !archiveIds.contains(task.id) &&
-            !deletedIds.contains(task.id);
-      }).toList();
-
+      // Endpoint /tasks seharusnya hanya mengembalikan
+      // tugas aktif milik pengguna yang sedang login.
       _tasks
         ..clear()
-        ..addAll(filteredTasks);
+        ..addAll(
+          result.where(
+            (task) =>
+                task.archivedAt == null &&
+                task.deletedAt == null,
+          ),
+        );
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -307,6 +101,73 @@ class TaskProvider extends ChangeNotifier {
 
   Future<void> refreshTasks() async {
     await loadTasks();
+  }
+
+  // =========================
+  // LOAD ARCHIVE FROM API
+  // =========================
+
+  Future<void> loadArchive(int userId) async {
+    try {
+      final result = await _taskService.getArchivedTasks();
+
+      final items = result
+          .where((task) =>
+              task.userId == userId &&
+              task.archivedAt != null &&
+              task.deletedAt == null)
+          .map(
+            (task) => ArchivedTask(
+              task: task,
+              archivedAt: task.archivedAt!,
+            ),
+          )
+          .toList()
+        ..sort(
+          (a, b) => b.archivedAt.compareTo(a.archivedAt),
+        );
+
+      _archiveItems[userId] = items;
+
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  // =========================
+  // LOAD TRASH FROM API
+  // =========================
+
+  Future<void> loadTrash(int userId) async {
+    try {
+      final result = await _taskService.getTrashedTasks();
+
+      final items = result
+          .where((task) =>
+              task.userId == userId &&
+              task.deletedAt != null)
+          .map(
+            (task) => TrashedTask(
+              task: task,
+              deletedAt: task.deletedAt!,
+            ),
+          )
+          .toList()
+        ..sort(
+          (a, b) => b.deletedAt.compareTo(a.deletedAt),
+        );
+
+      _trashItems[userId] = items;
+
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 
   // =========================
@@ -331,7 +192,11 @@ class TaskProvider extends ChangeNotifier {
         isCompleted: isCompleted,
       );
 
-      _tasks.add(newTask);
+      if (newTask.archivedAt == null &&
+          newTask.deletedAt == null) {
+        _tasks.add(newTask);
+      }
+
       notifyListeners();
     } catch (e) {
       _errorMessage = e.toString();
@@ -369,7 +234,9 @@ class TaskProvider extends ChangeNotifier {
       );
 
       final index = _tasks.indexWhere(
-        (task) => task.id == id,
+        (task) =>
+            task.id == id &&
+            task.userId == existingTask.userId,
       );
 
       if (index != -1) {
@@ -393,28 +260,18 @@ class TaskProvider extends ChangeNotifier {
 
     final ownerId = existingTask.userId;
 
-    await _loadTrashForUser(ownerId);
+    try {
+      // Soft delete melalui Laravel API.
+      await _taskService.deleteTask(id);
 
-    final items = _trashItems.putIfAbsent(
-      ownerId,
-      () => [],
-    );
+      // Muat ulang Home dan Trash dari database.
+      await loadTasks();
+      await loadTrash(ownerId);
 
-    if (!items.any((item) => item.task.id == id)) {
-      items.add(
-        TrashedTask(
-          task: existingTask,
-          deletedAt: DateTime.now(),
-        ),
-      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
     }
-
-    _tasks.removeWhere(
-      (task) => task.id == id && task.userId == ownerId,
-    );
-
-    await _saveTrashForUser(ownerId);
-    notifyListeners();
   }
 
   // =========================
@@ -428,28 +285,18 @@ class TaskProvider extends ChangeNotifier {
 
     final ownerId = existingTask.userId;
 
-    await _loadArchiveForUser(ownerId);
+    try {
+      // Simpan archived_at melalui Laravel API.
+      await _taskService.archiveTask(id);
 
-    final items = _archiveItems.putIfAbsent(
-      ownerId,
-      () => [],
-    );
+      // Perbarui Home dan Archive dari database.
+      await loadTasks();
+      await loadArchive(ownerId);
 
-    if (!items.any((item) => item.task.id == id)) {
-      items.add(
-        ArchivedTask(
-          task: existingTask,
-          archivedAt: DateTime.now(),
-        ),
-      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
     }
-
-    _tasks.removeWhere(
-      (task) => task.id == id && task.userId == ownerId,
-    );
-
-    await _saveArchiveForUser(ownerId);
-    notifyListeners();
   }
 
   // =========================
@@ -460,30 +307,18 @@ class TaskProvider extends ChangeNotifier {
     int id, {
     required int userId,
   }) async {
-    await _loadArchiveForUser(userId);
+    try {
+      // Hapus archived_at melalui Laravel API.
+      await _taskService.unarchiveTask(id);
 
-    final items = _archiveItems[userId] ?? [];
+      // Muat ulang data agar status sesuai database.
+      await loadTasks();
+      await loadArchive(userId);
 
-    final index = items.indexWhere(
-      (item) => item.task.id == id,
-    );
-
-    if (index == -1) return;
-
-    final restoredTask = items[index].task;
-
-    items.removeAt(index);
-
-    final alreadyExists = _tasks.any(
-      (task) => task.id == id && task.userId == userId,
-    );
-
-    if (!alreadyExists) {
-      _tasks.add(restoredTask);
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
     }
-
-    await _saveArchiveForUser(userId);
-    notifyListeners();
   }
 
   // =========================
@@ -494,39 +329,18 @@ class TaskProvider extends ChangeNotifier {
     int id, {
     required int userId,
   }) async {
-    await _loadArchiveForUser(userId);
-    await _loadTrashForUser(userId);
+    try {
+      // Soft delete juga berlaku untuk tugas yang diarsipkan.
+      await _taskService.deleteTask(id);
 
-    final archiveItems = _archiveItems[userId] ?? [];
+      // Perbarui kedua daftar.
+      await loadArchive(userId);
+      await loadTrash(userId);
 
-    final index = archiveItems.indexWhere(
-      (item) => item.task.id == id,
-    );
-
-    if (index == -1) return;
-
-    final archivedTask = archiveItems[index].task;
-
-    final trashItems = _trashItems.putIfAbsent(
-      userId,
-      () => [],
-    );
-
-    if (!trashItems.any((item) => item.task.id == id)) {
-      trashItems.add(
-        TrashedTask(
-          task: archivedTask,
-          deletedAt: DateTime.now(),
-        ),
-      );
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
     }
-
-    archiveItems.removeAt(index);
-
-    await _saveArchiveForUser(userId);
-    await _saveTrashForUser(userId);
-
-    notifyListeners();
   }
 
   // =========================
@@ -537,30 +351,21 @@ class TaskProvider extends ChangeNotifier {
     int id, {
     required int userId,
   }) async {
-    await _loadTrashForUser(userId);
+    try {
+      // Restore deleted_at melalui Laravel API.
+      await _taskService.restoreTask(id);
 
-    final items = _trashItems[userId] ?? [];
+      // archived_at tidak dihapus oleh proses restore.
+      // Jika sebelumnya diarsipkan, tugas kembali ke Archive.
+      // Jika tidak, tugas kembali ke Home.
+      await loadTasks();
+      await loadArchive(userId);
+      await loadTrash(userId);
 
-    final index = items.indexWhere(
-      (item) => item.task.id == id,
-    );
-
-    if (index == -1) return;
-
-    final restoredTask = items[index].task;
-
-    items.removeAt(index);
-
-    final alreadyExists = _tasks.any(
-      (task) => task.id == id && task.userId == userId,
-    );
-
-    if (!alreadyExists) {
-      _tasks.add(restoredTask);
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
     }
-
-    await _saveTrashForUser(userId);
-    notifyListeners();
   }
 
   // =========================
@@ -571,28 +376,21 @@ class TaskProvider extends ChangeNotifier {
     int id, {
     required int userId,
   }) async {
-    await _loadTrashForUser(userId);
+    try {
+      // Hapus permanen melalui endpoint /force.
+      await _taskService.deleteTaskForever(id);
 
-    final items = _trashItems[userId] ?? [];
+      // Perbarui daftar Trash dari database.
+      await loadTrash(userId);
 
-    items.removeWhere(
-      (item) => item.task.id == id,
-    );
-
-    _permanentlyDeletedIds
-        .putIfAbsent(userId, () => {})
-        .add(id);
-
-    _tasks.removeWhere(
-      (task) => task.id == id && task.userId == userId,
-    );
-
-    await _saveTrashForUser(userId);
-    notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      rethrow;
+    }
   }
 
   // =========================
-  // TOGGLE STATUS
+  // TOGGLE TASK STATUS
   // =========================
 
   Future<void> toggleTaskStatus(
@@ -610,7 +408,9 @@ class TaskProvider extends ChangeNotifier {
       );
 
       final index = _tasks.indexWhere(
-        (task) => task.id == id,
+        (task) =>
+            task.id == id &&
+            task.userId == existingTask.userId,
       );
 
       if (index != -1) {
@@ -624,7 +424,7 @@ class TaskProvider extends ChangeNotifier {
   }
 
   // =========================
-  // GET TASK
+  // GET TASK BY ID
   // =========================
 
   TaskModel? getTaskById(
@@ -709,7 +509,10 @@ class TaskProvider extends ChangeNotifier {
 
   void clearTasks() {
     _tasks.clear();
+    _trashItems.clear();
+    _archiveItems.clear();
     _errorMessage = null;
+
     notifyListeners();
   }
 }

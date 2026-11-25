@@ -6,6 +6,7 @@ import '../../core/routes/app_routes.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/task_provider.dart';
 import '../../widgets/app_logo.dart';
+import '../../models/task_model.dart';
 
 class ArchiveScreen extends StatefulWidget {
   const ArchiveScreen({super.key});
@@ -230,6 +231,90 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     return result == true;
   }
 
+  Future<void> _showSuccessDialog({
+    required String title,
+    required String message,
+  }) async {
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: const Color(0xFFFFFCF5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: Color(0xFF55A875),
+                  size: 48,
+                ),
+
+                const SizedBox(height: 14),
+
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: navy,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 9),
+
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: muted,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: orange,
+                      foregroundColor: navy,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<bool> _confirmMoveToTrash(int count) {
     return _showConfirmationDialog(
       heading: 'Move to Trash',
@@ -293,15 +378,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _isSelectionMode = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            taskIds.length == 1
-                ? 'Task moved to Trash.'
-                : '${taskIds.length} tasks moved to Trash.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
+      await _showSuccessDialog(
+        title: 'Successfully Moved!',
+        message: taskIds.length == 1
+            ? 'Task has been moved to Trash.'
+            : '${taskIds.length} tasks have been moved to Trash.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -352,15 +433,11 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
         _isSelectionMode = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            taskIds.length == 1
-                ? 'Task restored to Home.'
-                : '${taskIds.length} tasks restored to Home.',
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
+      await _showSuccessDialog(
+        title: 'Successfully Restored!',
+        message: taskIds.length == 1
+            ? 'Task has been restored to Home.'
+            : '${taskIds.length} tasks have been restored to Home.',
       );
     } catch (e) {
       if (!mounted) return;
@@ -595,6 +672,23 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
     );
   }
 
+  Color _getDeadlineBorderColor(TaskModel task) {
+    if (task.isCompleted) {
+      return const Color(0xFFC8C8C8);
+    }
+
+    switch (task.deadlineLevel) {
+      case DeadlineLevel.urgent:
+        return Colors.red.shade400;
+
+      case DeadlineLevel.near:
+        return Colors.orange.shade400;
+
+      case DeadlineLevel.safe:
+        return Colors.green.shade400;
+    }
+  }
+
   Widget _buildTaskCard(ArchivedTask item, int userId) {
     final task = item.task;
     final isSelected = _selectedIds.contains(task.id);
@@ -623,8 +717,10 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
           color: isSelected ? selectedBlue : Colors.white,
           borderRadius: BorderRadius.circular(13),
           border: Border.all(
-            color: isSelected ? navy : cardBorder,
-            width: isSelected ? 1.1 : 0.8,
+            color: isSelected
+                ? navy
+                : _getDeadlineBorderColor(task),
+            width: isSelected ? 1.1 : 1.3,
           ),
           boxShadow: [
             BoxShadow(

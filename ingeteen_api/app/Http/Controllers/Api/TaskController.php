@@ -16,6 +16,7 @@ class TaskController extends Controller
     {
         $tasks = $request->user()
             ->tasks()
+            ->whereNull('archived_at')
             ->with('label')
             ->orderBy('deadline', 'asc')
             ->get();
@@ -23,6 +24,46 @@ class TaskController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Daftar tugas berhasil diambil.',
+            'data' => $tasks,
+        ], 200);
+    }
+
+    /**
+     * Mengambil tugas yang sudah diarsipkan.
+     */
+    public function archived(Request $request): JsonResponse
+    {
+        $tasks = $request->user()
+            ->tasks()
+            ->whereNotNull('archived_at')
+            ->with('label')
+            ->orderBy('archived_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar tugas Archive berhasil diambil.',
+            'data' => $tasks,
+        ], 200);
+    }
+
+    /**
+     * Mengambil tugas yang berada di Trash.
+     * withTrashed() diperlukan agar data soft-deleted dapat diambil.
+     */
+    public function trash(Request $request): JsonResponse
+    {
+        $tasks = $request->user()
+            ->tasks()
+            ->withTrashed()
+            ->whereNotNull('deleted_at')
+            ->with('label')
+            ->orderBy('deleted_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar tugas Trash berhasil diambil.',
             'data' => $tasks,
         ], 200);
     }
@@ -63,8 +104,7 @@ class TaskController extends Controller
             ],
         ]);
 
-        // Membuat tugas melalui relasi user
-        // sehingga user_id otomatis mengikuti user login
+        // user_id otomatis mengikuti user yang login.
         $task = $request->user()
             ->tasks()
             ->create($validated);
@@ -100,7 +140,6 @@ class TaskController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
-        // Cari tugas berdasarkan user yang login
         $task = $request->user()
             ->tasks()
             ->findOrFail($id);
@@ -177,6 +216,8 @@ class TaskController extends Controller
             'is_completed' => $validated['is_completed'],
         ]);
 
+        $task->load('label');
+
         return response()->json([
             'success' => true,
             'message' => 'Status tugas berhasil diperbarui.',
@@ -185,7 +226,7 @@ class TaskController extends Controller
     }
 
     /**
-     * Menghapus tugas.
+     * Memindahkan tugas aktif atau Archive ke Trash.
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
@@ -197,7 +238,92 @@ class TaskController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Tugas berhasil dihapus.',
+            'message' => 'Tugas berhasil dipindahkan ke Trash.',
+        ], 200);
+    }
+
+    /**
+     * Memindahkan tugas aktif ke Archive.
+     */
+    public function archive(Request $request, int $id): JsonResponse
+    {
+        $task = $request->user()
+            ->tasks()
+            ->findOrFail($id);
+
+        $task->update([
+            'archived_at' => now(),
+        ]);
+
+        $task->load('label');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tugas berhasil diarsipkan.',
+            'data' => $task,
+        ], 200);
+    }
+
+    /**
+     * Mengembalikan tugas dari Archive ke Home.
+     */
+    public function unarchive(Request $request, int $id): JsonResponse
+    {
+        $task = $request->user()
+            ->tasks()
+            ->findOrFail($id);
+
+        $task->update([
+            'archived_at' => null,
+        ]);
+
+        $task->load('label');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tugas berhasil dikembalikan dari Archive.',
+            'data' => $task,
+        ], 200);
+    }
+
+    /**
+     * Mengembalikan tugas dari Trash.
+     * Nilai archived_at tetap dipertahankan.
+     */
+    public function restore(Request $request, int $id): JsonResponse
+    {
+        $task = $request->user()
+            ->tasks()
+            ->withTrashed()
+            ->whereNotNull('deleted_at')
+            ->findOrFail($id);
+
+        $task->restore();
+        $task->load('label');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tugas berhasil dipulihkan dari Trash.',
+            'data' => $task,
+        ], 200);
+    }
+
+    /**
+     * Menghapus tugas dari database secara permanen.
+     */
+    public function forceDestroy(Request $request, int $id): JsonResponse
+    {
+        $task = $request->user()
+            ->tasks()
+            ->withTrashed()
+            ->whereNotNull('deleted_at')
+            ->findOrFail($id);
+
+        $task->forceDelete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tugas berhasil dihapus secara permanen.',
         ], 200);
     }
 }

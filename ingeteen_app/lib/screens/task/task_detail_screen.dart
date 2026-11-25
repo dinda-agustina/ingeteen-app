@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../models/task_model.dart';
-import '../models/label_model.dart';
-import '../providers/task_provider.dart';
-import '../providers/label_provider.dart';
+import '../../models/task_model.dart';
+import '../../models/label_model.dart';
+import '../../providers/task_provider.dart';
+import '../../providers/label_provider.dart';
 import 'task_form_screen.dart';
 
 class TaskDetailScreen extends StatefulWidget {
@@ -29,6 +29,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   bool _reminderDueDay = true;
 
   bool _isDeleting = false;
+  bool _isArchiving = false;
   bool _isUpdatingStatus = false;
 
   // Warna status tugas.
@@ -234,6 +235,127 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
+  Future<void> _showArchiveSuccessDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: const Color(0xFFFFFCF5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: Color(0xFF55A875),
+                  size: 48,
+                ),
+
+                const SizedBox(height: 14),
+
+                const Text(
+                  'Task archived successfully!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: navy,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 9),
+
+                const Text(
+                  'This task has been moved to your archive.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: mutedText,
+                    fontSize: 11,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: orange,
+                      foregroundColor: navy,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                    ),
+                    child: const Text(
+                      'Done',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Memindahkan tugas ke Archive.
+  Future<void> _archiveTask(TaskModel task) async {
+    if (_isArchiving || _isDeleting) return;
+
+    setState(() {
+      _isArchiving = true;
+    });
+
+    try {
+      await context.read<TaskProvider>().archiveTask(
+            task.id,
+            userId: task.userId,
+          );
+
+      if (!mounted) return;
+
+      // Tampilkan dialog sukses sebelum kembali ke Home.
+      await _showArchiveSuccessDialog();
+
+      if (!mounted) return;
+
+      // Kembali ke Home setelah pengguna menekan Done.
+      Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Failed to archive task. Please try again.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isArchiving = false;
+        });
+      }
+    }
+  }
+
   // Mengubah status tugas.
   Future<void> _toggleTaskStatus(TaskModel task) async {
     if (_isUpdatingStatus) return;
@@ -319,15 +441,46 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
         ),
         actions: [
+          // EDIT BUTTON
           IconButton(
             tooltip: 'Edit Task',
-            onPressed: () => _editTask(currentTask),
-            icon: const Icon(Icons.edit_outlined, size: 20),
+            onPressed: _isArchiving
+                ? null
+                : () => _editTask(currentTask),
+            icon: const Icon(
+              Icons.edit_outlined,
+              size: 20,
+            ),
           ),
 
+          // ARCHIVE BUTTON
+          IconButton(
+            tooltip: 'Archive Task',
+            onPressed: (_isArchiving || _isDeleting)
+                ? null
+                : () => _archiveTask(currentTask),
+            icon: _isArchiving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: navy,
+                    ),
+                  )
+                : const Icon(
+                    Icons.archive_outlined,
+                    color: navy,
+                    size: 20,
+                  ),
+          ),
+
+          // DELETE BUTTON
           IconButton(
             tooltip: 'Delete Task',
-            onPressed: _isDeleting ? null : () => _deleteTask(currentTask),
+            onPressed: (_isDeleting || _isArchiving)
+                ? null
+                : () => _deleteTask(currentTask),
             icon: const Icon(
               Icons.delete_outline,
               color: Colors.red,
@@ -561,8 +714,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 width: double.infinity,
                 height: 40,
                 child: ElevatedButton(
-                  onPressed: _isUpdatingStatus || _isDeleting
-                    ? null
+                  onPressed: _isUpdatingStatus || _isDeleting || _isArchiving ? null
                     : () => _toggleTaskStatus(currentTask),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: orange,

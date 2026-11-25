@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Task extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'label_id',
@@ -16,6 +17,7 @@ class Task extends Model
         'deskripsi',
         'deadline',
         'is_completed',
+        'archived_at',
     ];
 
     protected function casts(): array
@@ -23,6 +25,8 @@ class Task extends Model
         return [
             'deadline' => 'datetime',
             'is_completed' => 'boolean',
+            'archived_at' => 'datetime',
+            'deleted_at' => 'datetime',
         ];
     }
 

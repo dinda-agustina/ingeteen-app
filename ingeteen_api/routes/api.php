@@ -28,15 +28,23 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     });
 
+    Route::get('/tasks/archived', [TaskController::class, 'archived']);
+    Route::get('/tasks/trash', [TaskController::class, 'trash']);
+
+    Route::post('/tasks/{id}/archive', [TaskController::class, 'archive']);
+    Route::post('/tasks/{id}/unarchive', [TaskController::class, 'unarchive']);
+    Route::post('/tasks/{id}/restore', [TaskController::class, 'restore']);
+
+    Route::delete('/tasks/{id}/force', [TaskController::class, 'forceDestroy']);
+
     // CRUD Task
     Route::get('/tasks', [TaskController::class, 'index']);
     Route::post('/tasks', [TaskController::class, 'store']);
     Route::get('/tasks/{id}', [TaskController::class, 'show']);
     Route::patch('/tasks/{id}', [TaskController::class, 'update']);
-
     Route::patch('/tasks/{id}/status', [TaskController::class, 'updateStatus']);
-
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
+
 
     // CRUD Label
     Route::get('/labels', [LabelController::class, 'index']);

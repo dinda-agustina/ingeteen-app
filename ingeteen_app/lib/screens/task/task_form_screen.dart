@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../models/task_model.dart';
-import '../models/label_model.dart';
-import '../providers/auth_provider.dart';
-import '../providers/task_provider.dart';
-import '../providers/label_provider.dart';
-import '../services/dummy_data.dart';
+import '../../models/task_model.dart';
+import '../../models/label_model.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/task_provider.dart';
+import '../../providers/label_provider.dart';
+import '../../services/dummy_data.dart';
 
 class TaskFormScreen extends StatefulWidget {
   final TaskModel? task;

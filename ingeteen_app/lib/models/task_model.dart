@@ -1,3 +1,4 @@
+
 enum DeadlineLevel { urgent, near, safe }
 
 class TaskModel {
@@ -12,6 +13,10 @@ class TaskModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  // Status Archive dan Trash dari Laravel.
+  final DateTime? archivedAt;
+  final DateTime? deletedAt;
+
   const TaskModel({
     required this.id,
     required this.userId,
@@ -23,6 +28,8 @@ class TaskModel {
     this.isCompleted = false,
     required this.createdAt,
     required this.updatedAt,
+    this.archivedAt,
+    this.deletedAt,
   });
 
   DeadlineLevel get deadlineLevel {
@@ -44,6 +51,12 @@ class TaskModel {
     String? deskripsi,
     DateTime? deadline,
     bool? isCompleted,
+
+    // Tambahan untuk Archive dan Trash.
+    DateTime? archivedAt,
+    DateTime? deletedAt,
+    bool clearArchivedAt = false,
+    bool clearDeletedAt = false,
   }) {
     return TaskModel(
       id: id,
@@ -56,6 +69,15 @@ class TaskModel {
       isCompleted: isCompleted ?? this.isCompleted,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
+
+      // Mempertahankan atau menghapus status Archive dan Trash.
+      archivedAt: clearArchivedAt
+          ? null
+          : (archivedAt ?? this.archivedAt),
+
+      deletedAt: clearDeletedAt
+          ? null
+          : (deletedAt ?? this.deletedAt),
     );
   }
 
@@ -68,9 +90,19 @@ class TaskModel {
       judul: json['judul'],
       deskripsi: json['deskripsi'] ?? '',
       deadline: DateTime.parse(json['deadline']),
-      isCompleted: json['is_completed'] == true || json['is_completed'] == 1,
+      isCompleted: json['is_completed'] == true ||
+          json['is_completed'] == 1,
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
+
+      // Membaca status Archive dan Trash dari response Laravel.
+      archivedAt: json['archived_at'] != null
+          ? DateTime.parse(json['archived_at'].toString())
+          : null,
+
+      deletedAt: json['deleted_at'] != null
+          ? DateTime.parse(json['deleted_at'].toString())
+          : null,
     );
   }
 
@@ -84,6 +116,8 @@ class TaskModel {
       'deskripsi': deskripsi,
       'deadline': deadline.toIso8601String(),
       'is_completed': isCompleted,
+      'archived_at': archivedAt?.toIso8601String(),
+      'deleted_at': deletedAt?.toIso8601String(),
     };
   }
 }

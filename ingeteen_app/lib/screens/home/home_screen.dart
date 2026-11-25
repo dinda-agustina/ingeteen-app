@@ -8,8 +8,8 @@ import '../../providers/task_provider.dart';
 import '../../core/routes/app_routes.dart';
 import '../../widgets/app_logo.dart';
 import '../../widgets/task_card.dart';
-import '../../task/task_detail_screen.dart';
-import '../../task/task_form_screen.dart';
+import '../task/task_detail_screen.dart';
+import '../task/task_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
